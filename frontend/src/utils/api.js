@@ -11,6 +11,18 @@ const api = axios.create({
   withCredentials: true, // Crucial for sending the graxion_access_token cookie
 });
 
+// Request interceptor to attach access token if available
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('graxion_access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response.data,

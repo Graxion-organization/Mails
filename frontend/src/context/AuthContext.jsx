@@ -14,12 +14,33 @@ export const AuthProvider = ({ children }) => {
     // For now, we mock the user context based on the shared secret auth pattern
     const fetchUser = async () => {
       try {
-        // We assume the cookie 'graxion_access_token' is already set by Graxion Auth
-        // Or we redirect to Graxion Auth to login
+        const params = new URLSearchParams(window.location.search);
+        const tokenFromUrl = params.get('token');
         
-        // Mocking user for development
+        if (tokenFromUrl) {
+          localStorage.setItem('graxion_access_token', tokenFromUrl);
+          params.delete('token');
+          const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+          window.history.replaceState({}, document.title, newUrl);
+        }
+
+        const token = localStorage.getItem('graxion_access_token');
+        if (!token) {
+          setLoading(false);
+          return; // No user, let App.jsx redirect to Auth
+        }
+
+        let decoded = null;
+        try {
+          const payloadBase64 = token.split('.')[1];
+          decoded = JSON.parse(atob(payloadBase64));
+        } catch (e) {
+          console.error('Failed to parse token');
+        }
+        
+        // Mocking user for development, but with real ID for backend sync
         setUser({
-          id: 'acc_123456789',
+          id: decoded?.id || 'acc_123456789',
           name: 'Demo User',
           email: 'demo@graxion.in',
           avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Demo',
