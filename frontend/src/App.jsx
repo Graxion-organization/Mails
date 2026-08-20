@@ -20,7 +20,7 @@ function RequireAuth({ children }) {
 
   if (authLoading || mailLoading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justify-content: 'center', background: '#000', color: '#fff' }}>
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#fff' }}>
         <Loader2 className="animate-spin" size={32} />
       </div>
     );
