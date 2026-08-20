@@ -18,7 +18,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Unauthorized — clear local state and redirect to auth
       if (window.location.pathname !== '/login') {
-        window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect=${encodeURIComponent(window.location.href)}`;
+        window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${encodeURIComponent(window.location.href)}&product=mail`;
       }
     } else {
       const message = error.response?.data?.message || 'An error occurred';
