@@ -3,7 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MailProvider, useMail } from './context/MailContext';
 import { SocketProvider } from './context/SocketContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 
 // Pages
 import MailboxLayout from './components/layout/MailboxLayout';
@@ -14,7 +14,7 @@ import Settings from './pages/Settings';
 import Onboarding from './pages/Onboarding';
 
 function RequireAuth({ children }) {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, authError, redirectToAuth } = useAuth();
   const { needsOnboarding, isLoading: mailLoading } = useMail();
   const location = useLocation();
 
@@ -26,10 +26,40 @@ function RequireAuth({ children }) {
     );
   }
 
+  // If there's an auth error (loop detected), show a manual login prompt
+  if (authError) {
+    return (
+      <div style={{
+        height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', background: '#09090b', color: '#fff', gap: '20px', fontFamily: 'Inter, sans-serif'
+      }}>
+        <AlertTriangle size={48} color="#f59e0b" />
+        <h2 style={{ fontSize: '20px', fontWeight: '600' }}>Authentication Required</h2>
+        <p style={{ color: '#a1a1aa', fontSize: '14px', textAlign: 'center', maxWidth: '400px' }}>
+          {authError}
+        </p>
+        <a
+          href={`${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${encodeURIComponent(window.location.origin)}&product=mail`}
+          style={{
+            padding: '10px 24px', background: '#a855f7', color: '#fff', borderRadius: '8px',
+            textDecoration: 'none', fontSize: '14px', fontWeight: '500'
+          }}
+        >
+          Go to Login
+        </a>
+      </div>
+    );
+  }
+
   if (!user) {
-    const currentUrl = encodeURIComponent(window.location.origin);
-    window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${currentUrl}&product=mail`;
-    return null;
+    // Use the controlled redirect with loop protection
+    redirectToAuth();
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#fff' }}>
+        <Loader2 className="animate-spin" size={32} />
+        <span style={{ marginLeft: '12px', color: '#a1a1aa' }}>Redirecting to login...</span>
+      </div>
+    );
   }
 
   // Redirect to onboarding if needed
@@ -102,5 +132,3 @@ function App() {
 }
 
 export default App;
-
-

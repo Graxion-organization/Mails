@@ -1,73 +1,99 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
+// Key used to prevent redirect loops
+const REDIRECT_GUARD_KEY = 'graxion_auth_redirect_ts';
+const REDIRECT_COOLDOWN_MS = 10000; // 10 second cooldown between redirects
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
-    // In a real implementation, this would fetch from Graxion Central Auth
-    // For now, we mock the user context based on the shared secret auth pattern
-    const fetchUser = async () => {
+    const initAuth = async () => {
       try {
+        // 1. Check for token passed via URL from Auth service
         const params = new URLSearchParams(window.location.search);
         const tokenFromUrl = params.get('token');
-        
+
         if (tokenFromUrl) {
           localStorage.setItem('graxion_access_token', tokenFromUrl);
+          // Clean the URL
           params.delete('token');
-          const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-          window.history.replaceState({}, document.title, newUrl);
+          const cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+          window.history.replaceState({}, document.title, cleanUrl);
         }
 
+        // 2. Read token from localStorage
         const token = localStorage.getItem('graxion_access_token');
         if (!token) {
-          setLoading(false);
-          return; // No user, let App.jsx redirect to Auth
+          setIsLoading(false);
+          return; // No token — RequireAuth will handle the redirect
         }
 
+        // 3. Decode and validate JWT structure (client-side check only)
         let decoded = null;
         try {
           const payloadBase64 = token.split('.')[1];
           decoded = JSON.parse(atob(payloadBase64));
-        } catch (e) {
-          console.error('Failed to parse token');
+        } catch {
+          // Malformed token — clear and bail
+          localStorage.removeItem('graxion_access_token');
+          setIsLoading(false);
+          return;
         }
-        
-        // Mocking user for development, but with real ID for backend sync
+
+        // 4. Check if token is expired
+        if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+          localStorage.removeItem('graxion_access_token');
+          setIsLoading(false);
+          return;
+        }
+
+        // 5. Set user from token payload
         setUser({
-          id: decoded?.id || 'acc_123456789',
-          name: 'Demo User',
-          email: 'demo@graxion.in',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Demo',
+          id: decoded.id,
+          sessionId: decoded.sessionId,
         });
       } catch (error) {
-        console.error('Auth error:', error);
+        console.error('Auth initialization error:', error);
+        setAuthError('Authentication failed');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchUser();
+    initAuth();
   }, []);
 
-  const login = () => {
-    window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect=${encodeURIComponent(window.location.href)}`;
+  const redirectToAuth = () => {
+    // Guard against redirect loops — if we redirected less than 10s ago, don't redirect again
+    const lastRedirect = sessionStorage.getItem(REDIRECT_GUARD_KEY);
+    if (lastRedirect && Date.now() - parseInt(lastRedirect) < REDIRECT_COOLDOWN_MS) {
+      console.warn('Redirect loop detected — suppressing redirect to Auth');
+      setAuthError('Unable to authenticate. Please try logging in manually.');
+      return;
+    }
+
+    sessionStorage.setItem(REDIRECT_GUARD_KEY, Date.now().toString());
+    const currentUrl = encodeURIComponent(window.location.origin);
+    window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${currentUrl}&product=mail`;
   };
 
   const logout = () => {
-    // Implementation would call Graxion Auth logout endpoint
+    localStorage.removeItem('graxion_access_token');
+    sessionStorage.removeItem(REDIRECT_GUARD_KEY);
     setUser(null);
     window.location.href = `${import.meta.env.VITE_AUTH_URL}/login`;
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, isLoading, authError, redirectToAuth, logout }}>
+      {children}
     </AuthContext.Provider>
   );
 };

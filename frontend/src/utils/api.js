@@ -8,10 +8,10 @@ if (baseURL && baseURL.startsWith('http') && !baseURL.endsWith('/api')) {
 
 const api = axios.create({
   baseURL,
-  withCredentials: true, // Crucial for sending the graxion_access_token cookie
+  withCredentials: true,
 });
 
-// Request interceptor to attach access token if available
+// Request interceptor — attach Bearer token from localStorage
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('graxion_access_token');
@@ -23,15 +23,16 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
+// Response interceptor — handle errors WITHOUT auto-redirecting on 401
+// The redirect-to-auth logic is now exclusively handled by RequireAuth in App.jsx
+// This prevents the infinite redirect loop that was happening before
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Unauthorized — clear local state and redirect to auth
-      if (window.location.pathname !== '/login') {
-        window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${encodeURIComponent(window.location.href)}&product=mail`;
-      }
+      // Clear the stale token so AuthContext/RequireAuth can detect unauthenticated state
+      localStorage.removeItem('graxion_access_token');
+      // Do NOT redirect here — let React handle it via state
     } else {
       const message = error.response?.data?.message || 'An error occurred';
       toast.error(message);
