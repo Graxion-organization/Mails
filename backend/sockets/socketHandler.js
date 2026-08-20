@@ -4,13 +4,25 @@ import jwt from 'jsonwebtoken';
 let io;
 
 export const initSocket = (server) => {
+  const allowedOrigins = [
+    process.env.CLIENT_URL,
+    process.env.AUTH_URL,
+    process.env.GRAXION_MAIN_URL,
+    process.env.FLOW_URL,
+    process.env.AI_URL,
+    'https://mail.graxion.in',
+    'https://accounts.graxion.in',
+    'https://graxion.in',
+    'https://www.graxion.in',
+    'https://flow.graxion.in',
+    'https://ai.graxion.in',
+    'http://localhost:5177',
+    'http://localhost:5175'
+  ].filter(Boolean);
+
   io = new Server(server, {
     cors: {
-      origin: [
-        process.env.CLIENT_URL,
-        'http://localhost:5177',
-        'http://localhost:5175'
-      ],
+      origin: allowedOrigins,
       credentials: true,
     }
   });
