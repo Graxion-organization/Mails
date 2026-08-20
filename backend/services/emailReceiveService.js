@@ -6,11 +6,15 @@ import Filter from '../models/Filter.js';
 import Notification from '../models/Notification.js';
 import { analyzeSpam } from './spamService.js';
 
+import getResend from '../config/resend.js';
+import { escapeRegExp } from 'lodash-es';
+
 /**
  * Process an inbound email from Resend webhook
  */
 export const processInboundEmail = async (payload) => {
-  const {
+  let {
+    email_id,
     from: fromRaw,
     to: toRaw,
     cc: ccRaw,
@@ -19,7 +23,23 @@ export const processInboundEmail = async (payload) => {
     text,
     headers = {},
     attachments: rawAttachments = [],
+    message_id: payloadMessageId,
   } = payload;
+
+  // Resend webhook 'email.received' only sends metadata. We must fetch the full body.
+  if (email_id && !html && !text) {
+    try {
+      const resend = getResend();
+      const { data: fullEmail } = await resend.emails.get(email_id);
+      if (fullEmail) {
+        html = fullEmail.html;
+        text = fullEmail.text;
+        if (fullEmail.bcc) payload.bcc = fullEmail.bcc;
+      }
+    } catch (err) {
+      console.error(`Failed to fetch full email for ${email_id}:`, err.message);
+    }
+  }
 
   // Parse addresses
   const from = parseAddress(fromRaw);
@@ -53,7 +73,7 @@ export const processInboundEmail = async (payload) => {
     });
 
     // Extract Message-ID and threading headers
-    const messageId = headers['message-id'] || headers['Message-ID'] || `<${nanoid(24)}@inbound>`;
+    const messageId = payloadMessageId || headers['message-id'] || headers['Message-ID'] || `<${nanoid(24)}@inbound>`;
     const inReplyTo = headers['in-reply-to'] || headers['In-Reply-To'] || null;
     const referencesHeader = headers['references'] || headers['References'] || '';
     const references = referencesHeader ? referencesHeader.split(/\s+/).filter(Boolean) : [];
@@ -76,6 +96,18 @@ export const processInboundEmail = async (payload) => {
       }).sort({ createdAt: -1 });
       if (parentMessage) {
         thread = await Thread.findById(parentMessage.thread);
+      }
+    }
+
+    // Fallback to Subject matching if headers are stripped
+    if (!thread && subject) {
+      const cleanSubject = subject.replace(/^(Re|Fwd|Fw):\s*/i, '').trim();
+      const parentThread = await Thread.findOne({
+        mailbox: mailbox._id,
+        subject: new RegExp(`^${escapeRegExp(cleanSubject)}$`, 'i')
+      }).sort({ createdAt: -1 });
+      if (parentThread) {
+        thread = parentThread;
       }
     }
 
