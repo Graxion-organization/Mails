@@ -11,7 +11,7 @@ export default function ThreadView() {
   const { threadId } = useParams();
   const navigate = useNavigate();
   const { joinThread, leaveThread, threadPresence, socket } = useSocket();
-  const { activeOrg, activeMailbox } = useMail();
+  const { activeOrg, activeMailbox, openComposer } = useMail();
   
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -193,7 +193,23 @@ export default function ThreadView() {
                     <div style={styles.date}>{format(new Date(msg.createdAt), 'MMM d, yyyy, h:mm a')}</div>
                     <div style={styles.messageActions}>
                       <button style={styles.iconBtnSmall} onClick={() => setActiveNoteMessageId(activeNoteMessageId === msg._id ? null : msg._id)} title="Add Internal Note"><FileText size={14} /></button>
-                      <button style={styles.iconBtnSmall}><Reply size={14} /></button>
+                      <button 
+                        style={styles.iconBtnSmall}
+                        onClick={() => {
+                          const replyToEmail = msg.from.email;
+                          const subjectPrefix = msg.subject.startsWith('Re:') ? '' : 'Re: ';
+                          openComposer({
+                            type: 'reply',
+                            messageId: msg._id,
+                            to: replyToEmail,
+                            subject: `${subjectPrefix}${msg.subject}`,
+                            body: `\n\n\n--- On ${format(new Date(msg.createdAt), 'PPpp')}, ${msg.from.name || msg.from.email} wrote ---\n${msg.bodyText || ''}`
+                          });
+                        }}
+                        title="Reply"
+                      >
+                        <Reply size={14} />
+                      </button>
                       <button style={styles.iconBtnSmall}><MoreVertical size={14} /></button>
                     </div>
                   </div>

@@ -21,19 +21,31 @@ export default function Composer() {
     try {
       const recipients = to.split(',').map(email => email.trim()).filter(Boolean);
       
-      await api.post('/mail/send', {
-        organizationId: activeOrg?._id,
-        mailboxId: activeMailbox?._id,
-        to: recipients,
-        subject,
-        bodyText: body,
-        bodyHtml: `<p>${body.replace(/\n/g, '<br/>')}</p>`,
-      });
+      if (composerInitialData?.type === 'reply') {
+        await api.post('/mail/reply', {
+          organizationId: activeOrg?._id,
+          mailboxId: activeMailbox?._id,
+          messageId: composerInitialData.messageId,
+          to: recipients,
+          bodyText: body,
+          bodyHtml: `<p>${body.replace(/\n/g, '<br/>')}</p>`,
+        });
+      } else {
+        await api.post('/mail/send', {
+          organizationId: activeOrg?._id,
+          mailboxId: activeMailbox?._id,
+          to: recipients,
+          subject,
+          bodyText: body,
+          bodyHtml: `<p>${body.replace(/\n/g, '<br/>')}</p>`,
+        });
+      }
       
       toast.success('Email sent!');
       closeComposer();
     } catch (error) {
       console.error('Send error:', error);
+      toast.error(error.response?.data?.message || 'Failed to send email');
     } finally {
       setIsSending(false);
     }
