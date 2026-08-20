@@ -28,7 +28,7 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
           folder: mode === 'search' ? undefined : folder,
         }
       });
-      setThreads(res.data || []);
+      setThreads(res.data?.data || []);
     } catch (error) {
       console.error('Failed to fetch threads', error);
     } finally {

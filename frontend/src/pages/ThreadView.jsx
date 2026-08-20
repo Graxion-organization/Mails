@@ -69,7 +69,7 @@ export default function ThreadView() {
   const fetchThread = async () => {
     try {
       const res = await api.get(`/mail/threads/${threadId}`);
-      setData(res.data);
+      setData(res.data?.data);
     } catch (error) {
       console.error('Failed to fetch thread', error);
       navigate('/');
@@ -94,7 +94,7 @@ export default function ThreadView() {
     try {
       const res = await api.post(`/mail/messages/${messageId}/notes`, { text: noteText });
       // Optimistic update
-      handleNoteAdded({ messageId, note: res.data });
+      handleNoteAdded({ messageId, note: res.data?.data });
       setNoteText('');
       setActiveNoteMessageId(null);
     } catch (error) {
