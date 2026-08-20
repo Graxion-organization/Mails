@@ -27,7 +27,8 @@ function RequireAuth({ children }) {
   }
 
   if (!user) {
-    window.location.href = `${import.meta.env.VITE_AUTH_URL}/login`;
+    const currentUrl = encodeURIComponent(window.location.origin);
+    window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${currentUrl}&product=mail`;
     return null;
   }
 

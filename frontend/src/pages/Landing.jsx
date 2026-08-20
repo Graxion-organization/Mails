@@ -32,7 +32,10 @@ export default function Landing() {
               Launch Workspace <Rocket size={16} />
             </Link>
           ) : (
-            <button className="gx-btn-primary" onClick={() => window.location.href = `${import.meta.env.VITE_AUTH_URL}/login`}>
+            <button className="gx-btn-primary" onClick={() => {
+              const currentUrl = encodeURIComponent(window.location.origin);
+              window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${currentUrl}&product=mail`;
+            }}>
               Enter Graxion <ArrowRight size={16} />
             </button>
           )}
@@ -52,7 +55,10 @@ export default function Landing() {
           Graxion Mail transforms chaotic email threads into synchronized, collaborative workspaces. Zero friction, infinite velocity.
         </p>
         <div className="gx-hero-cta">
-          <button className="gx-btn-glow" onClick={() => window.location.href = `${import.meta.env.VITE_AUTH_URL}/login`}>
+          <button className="gx-btn-glow" onClick={() => {
+            const currentUrl = encodeURIComponent(window.location.origin);
+            window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${currentUrl}&product=mail`;
+          }}>
             Start Exploring
           </button>
           <button className="gx-btn-outline">
