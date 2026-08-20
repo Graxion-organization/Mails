@@ -10,9 +10,10 @@ const router = Router();
 router.post('/resend/inbound', async (req, res) => {
   try {
     // TODO: Verify webhook signature with RESEND_WEBHOOK_SECRET
-    const payload = req.body;
+    // Resend webhook payload might be wrapped in 'data' depending on webhook type
+    const payload = req.body.type === 'email.received' ? req.body.data : req.body;
     
-    console.log('📨 Inbound email webhook received');
+    console.log('📨 Inbound email webhook received for:', payload.to);
     
     const results = await processInboundEmail(payload);
     
