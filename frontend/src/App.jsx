@@ -75,10 +75,30 @@ function RequireAuth({ children }) {
   return children;
 }
 
+function HomeRedirect() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#fff' }}>
+        <Loader2 className="animate-spin" size={32} />
+      </div>
+    );
+  }
+
+  // If user is authenticated, skip landing and go to inbox
+  if (user) {
+    return <Navigate to="/inbox" replace />;
+  }
+
+  // Otherwise show landing page
+  return <Landing />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<HomeRedirect />} />
       
       <Route path="/onboarding" element={
         <RequireAuth>
