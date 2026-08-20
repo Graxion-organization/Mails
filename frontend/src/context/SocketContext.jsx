@@ -23,6 +23,7 @@ export const SocketProvider = ({ children }) => {
     // It relies on cookies (graxion_access_token) for auth
     const socketInstance = io(import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:6002', {
       withCredentials: true,
+      transports: ['websocket'], // Force WebSocket to prevent Session ID unknown polling errors
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,

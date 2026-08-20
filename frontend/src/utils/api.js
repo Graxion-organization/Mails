@@ -1,8 +1,13 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+let baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
+if (baseURL && baseURL.startsWith('http') && !baseURL.endsWith('/api')) {
+  baseURL = `${baseURL.replace(/\/$/, '')}/api`;
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL,
   withCredentials: true, // Crucial for sending the graxion_access_token cookie
 });
 
