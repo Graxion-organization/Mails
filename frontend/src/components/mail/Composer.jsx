@@ -65,7 +65,7 @@ export default function Composer() {
   }
 
   return (
-    <div style={{...styles.container, ...(isFullScreen ? styles.fullScreen : {})}} className="animate-slide-up">
+    <div className={`mail-composer animate-slide-up ${isFullScreen ? 'full-screen' : ''}`}>
       <div style={styles.header}>
         <div style={styles.headerTitle}>New Message</div>
         <div style={styles.actions}>

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const { mailboxes, activeMailbox, setActiveMailbox, openComposer, stats } = useMail();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -20,7 +20,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <div style={styles.sidebar}>
+    <div className={`mail-sidebar ${isOpen ? 'open' : ''}`}>
       {/* Mailbox Selector */}
       <div style={styles.selectorContainer}>
         <button 
@@ -70,6 +70,7 @@ export default function Sidebar() {
           <NavLink 
             key={item.id} 
             to={item.path}
+            onClick={onClose}
             style={({ isActive }) => ({
               ...styles.navLink,
               ...(isActive ? styles.navLinkActive : {})

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -6,13 +7,21 @@ import { useMail } from '../../context/MailContext';
 
 export default function MailboxLayout() {
   const { isComposerOpen } = useMail();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   return (
-    <div style={styles.container}>
-      <Sidebar />
-      <div style={styles.main}>
-        <Header />
-        <div style={styles.content}>
+    <div className="mail-layout-container">
+      {/* Mobile overlay */}
+      <div 
+        className={`mobile-overlay ${isMobileSidebarOpen ? 'open' : ''}`}
+        onClick={() => setIsMobileSidebarOpen(false)}
+      ></div>
+
+      <Sidebar isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} />
+      
+      <div className="mail-layout-main">
+        <Header onMenuClick={() => setIsMobileSidebarOpen(true)} />
+        <div className="mail-layout-content">
           <Outlet />
         </div>
       </div>
@@ -21,23 +30,3 @@ export default function MailboxLayout() {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: 'flex',
-    height: '100vh',
-    width: '100vw',
-    backgroundColor: 'var(--bg-main)',
-  },
-  main: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    minWidth: 0, // prevents flex item from overflowing
-  },
-  content: {
-    flex: 1,
-    overflow: 'hidden',
-    position: 'relative',
-  }
-};

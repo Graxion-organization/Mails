@@ -1,14 +1,17 @@
-import { Search, Bell, User } from 'lucide-react';
+import { Search, Bell, User, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useMail } from '../../context/MailContext';
 
-export default function Header() {
+export default function Header({ onMenuClick }) {
   const { user, logout } = useAuth();
   const { activeOrg } = useMail();
 
   return (
-    <header style={styles.header}>
+    <header className="mail-header">
       <div style={styles.left}>
+        <button className="mobile-menu-btn" onClick={onMenuClick}>
+          <Menu size={20} color="var(--text-main)" />
+        </button>
         <div style={styles.brand}>
           {/* We can put a small logo here */}
           <span style={styles.brandName}>Graxion Mail</span>
@@ -16,7 +19,7 @@ export default function Header() {
         </div>
       </div>
       
-      <div style={styles.center}>
+      <div style={styles.center} className="header-search-container">
         <div style={styles.searchBar}>
           <Search size={18} color="var(--text-muted)" />
           <input 
