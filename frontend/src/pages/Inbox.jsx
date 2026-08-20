@@ -79,47 +79,70 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
       </div>
 
       <div style={styles.threadList}>
-        {threads.map(thread => (
-          <div 
-            key={thread._id} 
-            style={{...styles.threadRow, ...(thread.isRead ? styles.threadRead : styles.threadUnread)}}
-            onClick={() => navigate(`/thread/${thread._id}`)}
-          >
-            <div style={styles.rowActions} onClick={e => e.stopPropagation()}>
-              <input type="checkbox" style={styles.checkbox} />
-              <button 
-                style={styles.starBtn} 
-                onClick={(e) => toggleStar(e, thread._id, thread.isStarred)}
-              >
-                <Star 
-                  size={18} 
-                  fill={thread.isStarred ? '#f59e0b' : 'none'} 
-                  color={thread.isStarred ? '#f59e0b' : 'var(--text-muted)'} 
-                />
-              </button>
+        {threads.map(thread => {
+          const isUnread = !thread.readBy?.some(r => r.account === activeMailbox._id);
+          
+          return (
+            <div 
+              key={thread._id} 
+              className={`inbox-thread-row ${isUnread ? 'unread' : 'read'}`}
+              style={isUnread ? styles.threadUnread : styles.threadRead}
+              onClick={() => navigate(`/thread/${thread._id}`)}
+            >
+              <div className="inbox-row-actions" style={styles.rowActions} onClick={e => e.stopPropagation()}>
+                <input type="checkbox" style={styles.checkbox} />
+                <button 
+                  style={styles.starBtn} 
+                  onClick={(e) => toggleStar(e, thread._id, thread.isStarred)}
+                >
+                  <Star 
+                    size={18} 
+                    fill={thread.isStarred ? '#f59e0b' : 'none'} 
+                    color={thread.isStarred ? '#f59e0b' : 'var(--text-muted)'} 
+                  />
+                </button>
+              </div>
+              
+              <div className="inbox-thread-participants">
+                {/* Status Badges for Outbound */}
+                {thread.direction === 'outbound' && (
+                  <span style={thread.status === 'delivered' ? styles.statusBadgeClosed : styles.statusBadgePending}>
+                    {thread.status}
+                  </span>
+                )}
+                {/* Assigned indicator */}
+                {thread.assignedTo && (
+                  <div style={styles.assignedBadge}>
+                    <User size={12} />
+                  </div>
+                )}
+                <span>
+                  {mode === 'search' 
+                    ? (thread.from?.name || thread.from?.email)
+                    : folder === 'sent' 
+                      ? `To: ${thread.to?.[0]?.name || thread.to?.[0]?.email}`
+                      : (thread.from?.name || thread.from?.email?.split('@')[0])
+                  }
+                </span>
+                {thread.messageCount > 1 && <span style={styles.countBadge}>{thread.messageCount}</span>}
+              </div>
+              
+              <div className="inbox-thread-subject">
+                <div style={styles.badgesWrapper}>
+                  {/* Any labels can go here */}
+                </div>
+                <span style={{fontWeight: isUnread ? '600' : '400'}}>
+                  {thread.subject || '(No Subject)'}
+                </span>
+                <span style={styles.snippet}>- {thread.snippet || 'No content...'}</span>
+              </div>
+              
+              <div className="inbox-thread-date">
+                {formatDistanceToNow(new Date(thread.updatedAt), { addSuffix: true })}
+              </div>
             </div>
-            
-            <div style={styles.participants}>
-              {thread.participants.filter(p => p.email !== activeMailbox?.address).map(p => p.name || p.email.split('@')[0]).join(', ') || 'Me'}
-              {thread.messageCount > 1 && <span style={styles.countBadge}>{thread.messageCount}</span>}
-            </div>
-            
-            <div style={styles.badgesWrapper}>
-              {thread.status === 'pending' && <span style={styles.statusBadgePending}>Pending</span>}
-              {thread.status === 'closed' && <span style={styles.statusBadgeClosed}>Closed</span>}
-              {thread.assignedTo && <div style={styles.assignedBadge} title="Assigned"><User size={12}/></div>}
-            </div>
-            
-            <div style={styles.subjectWrapper}>
-              <span style={styles.subject}>{thread.subject}</span>
-              <span style={styles.snippet}>- {thread.snippet}</span>
-            </div>
-            
-            <div style={styles.date}>
-              {formatDistanceToNow(new Date(thread.lastMessageAt), { addSuffix: true })}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

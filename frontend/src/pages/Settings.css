@@ -384,3 +384,77 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Responsive Overrides for Settings */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 24px 16px;
+  }
+  
+  .settings-layout {
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .settings-sidebar {
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #27272a;
+    gap: 16px;
+  }
+  
+  .sidebar-group {
+    margin-bottom: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .group-label {
+    display: none; /* Hide group labels on mobile for space */
+  }
+  
+  .nav-btn {
+    white-space: nowrap;
+    width: auto;
+  }
+  
+  .settings-card {
+    padding: 16px;
+  }
+  
+  .section-header-flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .add-inline-form {
+    flex-direction: column;
+  }
+  
+  .list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .modal-content {
+    margin: 16px;
+    padding: 24px;
+  }
+  
+  .input-group {
+    flex-direction: column;
+  }
+  
+  .input-group input, .input-group select {
+    border-radius: 8px;
+  }
+  
+  .input-separator {
+    display: none;
+  }
+}

@@ -161,7 +161,7 @@ export default function ThreadView() {
       </div>
 
       {/* Content scroll area */}
-      <div style={styles.content}>
+      <div className="thread-view-container" style={{ flex: 1, overflowY: 'auto', backgroundColor: 'var(--bg-main)' }}>
         <div style={styles.subjectHeader}>
           <h2 style={styles.subject}>{thread.subject}</h2>
           <div style={styles.labels}>
@@ -176,7 +176,7 @@ export default function ThreadView() {
             <div key={msg._id} style={styles.messageGroup}>
               {/* Actual Message Card */}
               <div style={styles.messageCard}>
-                <div style={styles.messageHeader}>
+                <div className="thread-message-header" style={styles.messageHeader}>
                   <div style={styles.senderAvatar}>
                     {msg.from.name ? msg.from.name[0].toUpperCase() : msg.from.email[0].toUpperCase()}
                   </div>
@@ -191,7 +191,7 @@ export default function ThreadView() {
                   </div>
                   <div style={styles.messageMeta}>
                     <div style={styles.date}>{format(new Date(msg.createdAt), 'MMM d, yyyy, h:mm a')}</div>
-                    <div style={styles.messageActions}>
+                    <div className="thread-message-actions" style={styles.messageActions}>
                       <button style={styles.iconBtnSmall} onClick={() => setActiveNoteMessageId(activeNoteMessageId === msg._id ? null : msg._id)} title="Add Internal Note"><FileText size={14} /></button>
                       <button 
                         style={styles.iconBtnSmall}
