@@ -1,0 +1,34 @@
+{
+  "name": "graxion-mail-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Graxion Mail — Enterprise Email Platform Backend",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "worker": "node jobs/worker.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.750.0",
+    "@aws-sdk/s3-request-presigner": "^3.750.0",
+    "bullmq": "^5.40.0",
+    "compression": "^1.8.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^7.0.0",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.6.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.8.1",
+    "multer": "^2.2.0",
+    "nanoid": "^5.1.5",
+    "nodemon": "^3.1.14",
+    "resend": "^6.20.0",
+    "sanitize-html": "^2.16.0",
+    "socket.io": "^4.8.3"
+  }
+}
