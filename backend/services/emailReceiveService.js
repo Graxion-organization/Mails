@@ -34,8 +34,11 @@ export const processInboundEmail = async (payload) => {
   if (email_id && !html && !text) {
     try {
       const resend = getResend();
-      const { data: fullEmail } = await resend.emails.get(email_id);
-      if (fullEmail) {
+      const { data: fullEmail, error } = await resend.emails.receiving.get(email_id);
+      
+      if (error) {
+        console.error(`Resend API Error fetching email ${email_id}:`, error);
+      } else if (fullEmail) {
         html = fullEmail.html;
         text = fullEmail.text;
         if (fullEmail.bcc) payload.bcc = fullEmail.bcc;
