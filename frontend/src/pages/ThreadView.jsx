@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Reply, Forward, MoreVertical, Archive, Trash2, Eye, User, Send, FileText } from 'lucide-react';
+import { ArrowLeft, Reply, Forward, MoreVertical, Archive, Trash2, Eye, User, FileText, CheckCircle2 } from 'lucide-react';
 import api from '../utils/api';
 import { format } from 'date-fns';
 import { useSocket } from '../context/SocketContext';
 import { useMail } from '../context/MailContext';
 import toast from 'react-hot-toast';
+import './ThreadView.css';
 
 export default function ThreadView() {
   const { threadId } = useParams();
@@ -21,6 +22,11 @@ export default function ThreadView() {
   const [noteText, setNoteText] = useState('');
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
 
+  // Dropdown states
+  const [assignDropdownOpen, setAssignDropdownOpen] = useState(false);
+  const [moreOptionsId, setMoreOptionsId] = useState(null);
+  const [members, setMembers] = useState([]);
+
   useEffect(() => {
     fetchThread();
     joinThread(threadId);
@@ -31,6 +37,10 @@ export default function ThreadView() {
       socket.on('note:deleted', handleNoteDeleted);
     }
 
+    if (activeOrg) {
+      fetchMembers();
+    }
+
     return () => {
       leaveThread(threadId);
       if (socket) {
@@ -38,7 +48,18 @@ export default function ThreadView() {
         socket.off('note:deleted', handleNoteDeleted);
       }
     };
-  }, [threadId, socket]);
+  }, [threadId, socket, activeOrg]);
+
+  const fetchMembers = async () => {
+    try {
+      const res = await api.get(`/orgs/${activeOrg._id}/members`);
+      if (res.data?.success) {
+        setMembers(res.data.data.filter(m => m.status === 'active'));
+      }
+    } catch (error) {
+      console.error('Failed to fetch org members', error);
+    }
+  };
 
   const handleNoteAdded = ({ messageId, note }) => {
     setData(prev => {
@@ -88,6 +109,17 @@ export default function ThreadView() {
     }
   };
 
+  const assignThread = async (userId) => {
+    try {
+      await api.put(`/mail/threads/${threadId}`, { assignedTo: userId });
+      setData(prev => ({ ...prev, thread: { ...prev.thread, assignedTo: userId } }));
+      setAssignDropdownOpen(false);
+      toast.success(`Thread assigned`);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const submitNote = async (messageId) => {
     if (!noteText.trim()) return;
     setIsSubmittingNote(true);
@@ -105,7 +137,7 @@ export default function ThreadView() {
   };
 
   if (loading) {
-    return <div style={styles.centerMsg}>Loading conversation...</div>;
+    return <div className="thread-center-msg">Loading conversation...</div>;
   }
 
   if (!data) return null;
@@ -114,18 +146,18 @@ export default function ThreadView() {
   const presence = threadPresence[threadId] || [];
 
   return (
-    <div style={styles.container}>
+    <div className="thread-container">
       {/* Toolbar */}
-      <div style={styles.toolbar}>
-        <div style={styles.toolbarLeft}>
-          <button style={styles.iconBtn} onClick={() => navigate(-1)}>
+      <div className="thread-toolbar">
+        <div className="thread-toolbar-left">
+          <button className="thread-icon-btn" onClick={() => navigate(-1)}>
             <ArrowLeft size={18} />
           </button>
           
-          <div style={styles.divider}></div>
+          <div className="thread-divider"></div>
           
           <select 
-            style={styles.statusSelect} 
+            className="thread-status-select" 
             value={thread.status} 
             onChange={e => updateStatus(e.target.value)}
           >
@@ -134,67 +166,83 @@ export default function ThreadView() {
             <option value="closed">Closed</option>
           </select>
           
-          <button style={styles.btnOutline}>
-            <User size={14} style={{ marginRight: '6px' }}/> 
-            {thread.assignedTo ? 'Assigned' : 'Assign'}
-          </button>
+          <div className="thread-dropdown">
+            <button className="thread-btn-outline" onClick={() => setAssignDropdownOpen(!assignDropdownOpen)}>
+              <User size={14} style={{ marginRight: '6px' }}/> 
+              {thread.assignedTo ? 'Assigned' : 'Assign'}
+            </button>
+            {assignDropdownOpen && (
+              <div className="thread-dropdown-menu">
+                <div className="thread-dropdown-item" onClick={() => assignThread(null)}>
+                  Unassigned
+                </div>
+                {members.map(m => (
+                  <div key={m.user?._id || m._id} className="thread-dropdown-item" onClick={() => assignThread(m.user?._id || m.invitedEmail)}>
+                    {m.user?.name || m.invitedEmail}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-          <div style={styles.divider}></div>
+          <div className="thread-divider"></div>
           
-          <button style={styles.iconBtn}><Archive size={16} /></button>
-          <button style={styles.iconBtn}><Trash2 size={16} /></button>
+          <button className="thread-icon-btn" title="Archive"><Archive size={16} /></button>
+          <button className="thread-icon-btn" title="Delete"><Trash2 size={16} /></button>
         </div>
         
-        <div style={styles.toolbarRight}>
+        <div className="thread-toolbar-right">
           {presence.length > 0 && (
-            <div style={styles.presenceContainer} title="Colleagues viewing this thread">
+            <div className="thread-presence-container" title="Colleagues viewing this thread">
               <Eye size={16} color="var(--primary)" />
               {presence.map((uid, idx) => (
-                <div key={idx} style={styles.presenceAvatar}>
+                <div key={idx} className="thread-presence-avatar">
                   {uid.substring(0, 1).toUpperCase()}
                 </div>
               ))}
-              <span style={styles.presenceText}>viewing now</span>
+              <span className="thread-presence-text">viewing now</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Content scroll area */}
-      <div className="thread-view-container" style={{ flex: 1, overflowY: 'auto', backgroundColor: 'var(--bg-main)' }}>
-        <div style={styles.subjectHeader}>
-          <h2 style={styles.subject}>{thread.subject}</h2>
-          <div style={styles.labels}>
+      <div className="thread-content">
+        <div className="thread-subject-header">
+          <h2 className="thread-subject">{thread.subject}</h2>
+          <div className="thread-labels">
             {thread.labels?.map(l => (
-              <span key={l._id} style={{...styles.labelBadge, backgroundColor: l.color}}>{l.name}</span>
+              <span key={l._id} className="thread-label-badge" style={{backgroundColor: l.color}}>{l.name}</span>
             ))}
           </div>
         </div>
 
-        <div style={styles.messagesList}>
+        <div className="thread-messages-list">
           {messages.map((msg, index) => (
-            <div key={msg._id} style={styles.messageGroup}>
+            <div key={msg._id} className="thread-message-group">
               {/* Actual Message Card */}
-              <div style={styles.messageCard}>
-                <div className="thread-message-header" style={styles.messageHeader}>
-                  <div style={styles.senderAvatar}>
+              <div className="thread-message-card">
+                <div className="thread-message-header">
+                  <div className="thread-sender-avatar">
                     {msg.from.name ? msg.from.name[0].toUpperCase() : msg.from.email[0].toUpperCase()}
                   </div>
-                  <div style={styles.senderInfo}>
-                    <div style={styles.senderName}>
+                  <div className="thread-sender-info">
+                    <div className="thread-sender-name">
                       {msg.from.name || msg.from.email}
-                      <span style={styles.senderEmail}>&lt;{msg.from.email}&gt;</span>
+                      <span className="thread-sender-email">&lt;{msg.from.email}&gt;</span>
                     </div>
-                    <div style={styles.toInfo}>
+                    <div className="thread-to-info">
                       to {msg.to.map(t => t.name || t.email).join(', ')}
                     </div>
                   </div>
-                  <div style={styles.messageMeta}>
-                    <div style={styles.date}>{format(new Date(msg.createdAt), 'MMM d, yyyy, h:mm a')}</div>
-                    <div className="thread-message-actions" style={styles.messageActions}>
-                      <button style={styles.iconBtnSmall} onClick={() => setActiveNoteMessageId(activeNoteMessageId === msg._id ? null : msg._id)} title="Add Internal Note"><FileText size={14} /></button>
+                  <div className="thread-message-meta">
+                    <div className="thread-date">{format(new Date(msg.createdAt), 'MMM d, yyyy, h:mm a')}</div>
+                    <div className="thread-message-actions">
+                      <button className="thread-icon-btn-small" onClick={() => setActiveNoteMessageId(activeNoteMessageId === msg._id ? null : msg._id)} title="Add Internal Note">
+                        <FileText size={14} />
+                      </button>
                       <button 
-                        style={styles.iconBtnSmall}
+                        className="thread-icon-btn-small"
                         onClick={() => {
                           const replyToEmail = msg.from.email;
                           const subjectPrefix = msg.subject.startsWith('Re:') ? '' : 'Re: ';
@@ -210,30 +258,64 @@ export default function ThreadView() {
                       >
                         <Reply size={14} />
                       </button>
-                      <button style={styles.iconBtnSmall}><MoreVertical size={14} /></button>
+                      
+                      {/* Forward Button added here */}
+                      <button 
+                        className="thread-icon-btn-small"
+                        onClick={() => {
+                          const subjectPrefix = msg.subject.startsWith('Fwd:') ? '' : 'Fwd: ';
+                          openComposer({
+                            type: 'forward',
+                            messageId: msg._id,
+                            to: '',
+                            subject: `${subjectPrefix}${msg.subject}`,
+                            body: `\n\n\n---------- Forwarded message ---------\nFrom: ${msg.from.name} <${msg.from.email}>\nDate: ${format(new Date(msg.createdAt), 'PPpp')}\nSubject: ${msg.subject}\nTo: ${msg.to.map(t => t.email).join(', ')}\n\n${msg.bodyText || ''}`
+                          });
+                        }}
+                        title="Forward"
+                      >
+                        <Forward size={14} />
+                      </button>
+
+                      {/* More Options Dropdown */}
+                      <div className="thread-dropdown">
+                        <button 
+                          className="thread-icon-btn-small" 
+                          onClick={() => setMoreOptionsId(moreOptionsId === msg._id ? null : msg._id)}
+                        >
+                          <MoreVertical size={14} />
+                        </button>
+                        {moreOptionsId === msg._id && (
+                          <div className="thread-dropdown-menu" style={{right: 0, left: 'auto'}}>
+                            <div className="thread-dropdown-item">Copy Link</div>
+                            <div className="thread-dropdown-item">Mark Unread</div>
+                            <div className="thread-dropdown-item">Print</div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
                 
                 <div 
-                  style={styles.messageBody}
+                  className="thread-message-body"
                   dangerouslySetInnerHTML={{ __html: msg.bodyHtml || `<p>${msg.bodyText}</p>` }}
                 />
               </div>
               
               {/* Internal Notes Render */}
               {msg.internalNotes && msg.internalNotes.length > 0 && (
-                <div style={styles.notesContainer}>
+                <div className="thread-notes-container">
                   {msg.internalNotes.map(note => (
-                    <div key={note._id} style={styles.noteCard}>
-                      <div style={styles.noteHeader}>
-                        <div style={styles.noteAuthorAvatar}>
+                    <div key={note._id} className="thread-note-card">
+                      <div className="thread-note-header">
+                        <div className="thread-note-author-avatar">
                           {note.authorName[0]}
                         </div>
-                        <span style={styles.noteAuthor}>{note.authorName}</span>
-                        <span style={styles.noteDate}>{format(new Date(note.createdAt), 'MMM d, h:mm a')}</span>
+                        <span className="thread-note-author">{note.authorName}</span>
+                        <span className="thread-note-date">{format(new Date(note.createdAt), 'MMM d, h:mm a')}</span>
                       </div>
-                      <div style={styles.noteBody}>{note.text}</div>
+                      <div className="thread-note-body">{note.text}</div>
                     </div>
                   ))}
                 </div>
@@ -241,19 +323,18 @@ export default function ThreadView() {
 
               {/* Note Composer */}
               {activeNoteMessageId === msg._id && (
-                <div style={styles.noteComposer}>
+                <div className="thread-note-composer">
                   <textarea
-                    style={styles.noteTextarea}
+                    className="thread-note-textarea"
                     placeholder="Type an internal note... (only visible to your team)"
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     autoFocus
                   />
-                  <div style={styles.noteComposerActions}>
-                    <button style={styles.btnGhost} onClick={() => setActiveNoteMessageId(null)}>Cancel</button>
+                  <div className="thread-note-composer-actions">
+                    <button className="btn-ghost" onClick={() => setActiveNoteMessageId(null)}>Cancel</button>
                     <button 
-                      className="btn btn-primary" 
-                      style={styles.btnAddNote} 
+                      className="thread-btn-add-note" 
                       onClick={() => submitNote(msg._id)}
                       disabled={isSubmittingNote}
                     >
@@ -269,290 +350,3 @@ export default function ThreadView() {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
-  centerMsg: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    color: 'var(--text-muted)',
-  },
-  toolbar: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '12px 24px',
-    borderBottom: '1px solid var(--border-color)',
-    backgroundColor: 'var(--bg-main)',
-  },
-  toolbarLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  toolbarRight: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  iconBtn: {
-    color: 'var(--text-muted)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '8px',
-    borderRadius: '50%',
-    transition: 'background-color 0.2s',
-  },
-  iconBtnSmall: {
-    color: 'var(--text-muted)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '6px',
-    borderRadius: '4px',
-  },
-  divider: {
-    width: '1px',
-    height: '24px',
-    backgroundColor: 'var(--border-color)',
-    margin: '0 4px',
-  },
-  statusSelect: {
-    backgroundColor: 'var(--bg-surface)',
-    color: 'var(--text-main)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '6px',
-    padding: '6px 12px',
-    fontSize: '13px',
-    outline: 'none',
-  },
-  btnOutline: {
-    display: 'flex',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-    color: 'var(--text-main)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '6px',
-    padding: '6px 12px',
-    fontSize: '13px',
-  },
-  presenceContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-    border: '1px solid rgba(139, 92, 246, 0.3)',
-    borderRadius: '16px',
-    padding: '4px 12px',
-  },
-  presenceAvatar: {
-    width: '20px',
-    height: '20px',
-    borderRadius: '50%',
-    backgroundColor: 'var(--primary)',
-    color: 'white',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '11px',
-    fontWeight: 'bold',
-  },
-  presenceText: {
-    fontSize: '12px',
-    color: 'var(--primary)',
-    marginLeft: '4px',
-  },
-  content: {
-    flex: 1,
-    overflowY: 'auto',
-    padding: '24px 40px',
-  },
-  subjectHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    marginBottom: '32px',
-  },
-  subject: {
-    fontSize: '24px',
-    fontWeight: '400',
-    color: 'var(--text-main)',
-  },
-  labels: {
-    display: 'flex',
-    gap: '8px',
-  },
-  labelBadge: {
-    padding: '2px 8px',
-    borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: '500',
-    color: 'white',
-  },
-  messagesList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '32px',
-    paddingBottom: '40px',
-  },
-  messageGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  messageCard: {
-    backgroundColor: 'var(--bg-surface)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '12px',
-    overflow: 'hidden',
-  },
-  messageHeader: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    padding: '16px 24px',
-    borderBottom: '1px solid var(--border-color)',
-    backgroundColor: 'rgba(255,255,255,0.02)',
-  },
-  senderAvatar: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    backgroundColor: 'var(--primary)',
-    color: 'white',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '18px',
-    fontWeight: '600',
-    marginRight: '16px',
-  },
-  senderInfo: {
-    flex: 1,
-  },
-  senderName: {
-    fontSize: '15px',
-    fontWeight: '600',
-    marginBottom: '2px',
-  },
-  senderEmail: {
-    fontWeight: '400',
-    color: 'var(--text-muted)',
-    marginLeft: '8px',
-    fontSize: '13px',
-  },
-  toInfo: {
-    fontSize: '12px',
-    color: 'var(--text-muted)',
-  },
-  messageMeta: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: '8px',
-  },
-  date: {
-    fontSize: '13px',
-    color: 'var(--text-muted)',
-  },
-  messageActions: {
-    display: 'flex',
-    gap: '4px',
-  },
-  messageBody: {
-    padding: '24px',
-    fontSize: '14px',
-    lineHeight: '1.6',
-    color: 'var(--text-main)',
-    overflowX: 'auto',
-  },
-  notesContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    paddingLeft: '32px', // Indent notes to distinguish them
-  },
-  noteCard: {
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    border: '1px solid rgba(245, 158, 11, 0.3)',
-    borderLeft: '4px solid #f59e0b',
-    borderRadius: '8px',
-    padding: '12px 16px',
-  },
-  noteHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '8px',
-  },
-  noteAuthorAvatar: {
-    width: '20px',
-    height: '20px',
-    borderRadius: '50%',
-    backgroundColor: '#f59e0b',
-    color: 'black',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '11px',
-    fontWeight: 'bold',
-  },
-  noteAuthor: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#fcd34d',
-  },
-  noteDate: {
-    fontSize: '12px',
-    color: 'rgba(252, 211, 77, 0.7)',
-  },
-  noteBody: {
-    fontSize: '13px',
-    color: 'var(--text-main)',
-    lineHeight: '1.5',
-    whiteSpace: 'pre-wrap',
-  },
-  noteComposer: {
-    marginLeft: '32px',
-    backgroundColor: 'var(--bg-surface)',
-    border: '1px dashed #f59e0b',
-    borderRadius: '8px',
-    padding: '16px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-  },
-  noteTextarea: {
-    width: '100%',
-    minHeight: '80px',
-    background: 'rgba(0,0,0,0.2)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '6px',
-    padding: '12px',
-    color: 'var(--text-main)',
-    fontSize: '14px',
-    resize: 'vertical',
-    outline: 'none',
-  },
-  noteComposerActions: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: '12px',
-  },
-  btnGhost: {
-    padding: '6px 12px',
-    fontSize: '13px',
-    color: 'var(--text-muted)',
-    cursor: 'pointer',
-  },
-  btnAddNote: {
-    padding: '6px 16px',
-    backgroundColor: '#f59e0b',
-    color: 'black',
-  }
-};

@@ -29,21 +29,16 @@ function RequireAuth({ children }) {
   // If there's an auth error (loop detected), show a manual login prompt
   if (authError) {
     return (
-      <div style={{
-        height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'center', background: '#09090b', color: '#fff', gap: '20px', fontFamily: 'Inter, sans-serif'
-      }}>
+      <div className="auth-error-screen" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#09090b', color: '#fff', gap: '20px', padding: '20px', textAlign: 'center' }}>
         <AlertTriangle size={48} color="#f59e0b" />
-        <h2 style={{ fontSize: '20px', fontWeight: '600' }}>Authentication Required</h2>
-        <p style={{ color: '#a1a1aa', fontSize: '14px', textAlign: 'center', maxWidth: '400px' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Authentication Required</h2>
+        <p style={{ color: '#a1a1aa', fontSize: '14px', maxWidth: '400px' }}>
           {authError}
         </p>
         <a
           href={`${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${encodeURIComponent(window.location.origin)}&product=mail`}
-          style={{
-            padding: '10px 24px', background: '#a855f7', color: '#fff', borderRadius: '8px',
-            textDecoration: 'none', fontSize: '14px', fontWeight: '500'
-          }}
+          className="btn-primary"
+          style={{ textDecoration: 'none' }}
         >
           Go to Login
         </a>
@@ -95,6 +90,16 @@ function HomeRedirect() {
   return <Landing />;
 }
 
+function NotFound() {
+  return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#09090b', color: '#fff', gap: '16px' }}>
+      <h1 style={{ fontSize: '48px', margin: 0 }}>404</h1>
+      <p style={{ color: '#a1a1aa' }}>Page not found.</p>
+      <a href="/" className="btn-primary" style={{ textDecoration: 'none', marginTop: '16px' }}>Return Home</a>
+    </div>
+  );
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -123,6 +128,9 @@ function AppRoutes() {
         
         <Route path="/settings/*" element={<Settings />} />
       </Route>
+      
+      {/* 404 Route */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

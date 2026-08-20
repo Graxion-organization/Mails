@@ -132,6 +132,21 @@ export default function Settings() {
     }
   };
 
+  const handleUpdateRole = async (memberId, newRole) => {
+    try {
+      setLoading(true);
+      const res = await api.put(`/orgs/${activeOrg._id}/members/${memberId}`, { role: newRole });
+      if (res.data.success) {
+        toast.success('Role updated');
+        loadMembers();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update role');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!activeOrg) return null;
 
   return (
@@ -352,7 +367,17 @@ export default function Settings() {
                         </span>
                       </div>
                       <div className="item-actions">
-                        <span className="role-badge">{m.role.replace('_', ' ')}</span>
+                        <select 
+                          className="role-badge" 
+                          style={{border: 'none', outline: 'none', cursor: 'pointer', appearance: 'auto'}}
+                          value={m.role}
+                          onChange={(e) => handleUpdateRole(m._id, e.target.value)}
+                        >
+                          <option value="admin">Admin</option>
+                          <option value="manager">Manager</option>
+                          <option value="support_agent">Support Agent</option>
+                          <option value="member">Member</option>
+                        </select>
                         <button className="btn-icon text-red"><Trash2 size={16} /></button>
                       </div>
                     </div>

@@ -181,6 +181,22 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Technology Section */}
+      <section className="gx-features" id="technology" style={{paddingTop: '60px', paddingBottom: '60px', borderTop: '1px solid rgba(255,255,255,0.05)'}}>
+        <div className="gx-section-header">
+          <h2>Next-Gen Technology</h2>
+          <p>Built on the bleeding edge of WebSockets, React 19, and distributed edge infrastructure.</p>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="gx-features" id="pricing" style={{paddingTop: '60px', paddingBottom: '60px', borderTop: '1px solid rgba(255,255,255,0.05)'}}>
+        <div className="gx-section-header">
+          <h2>Transparent Pricing</h2>
+          <p>Enterprise power at startup prices. Pay only for the agents and bandwidth you consume.</p>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="gx-footer">
         <div className="gx-footer-content">

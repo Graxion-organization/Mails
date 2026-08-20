@@ -1,0 +1,271 @@
+.inbox-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.inbox-loading-container,
+.inbox-empty-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+}
+
+.inbox-empty-container {
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inbox-empty-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.inbox-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-main);
+  position: relative;
+}
+
+.inbox-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.inbox-search-input {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: var(--text-main);
+  font-size: 13px;
+  outline: none;
+  min-width: 250px;
+}
+
+.inbox-tool-btn {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.inbox-toolbar-right {
+  color: var(--text-muted);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.inbox-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.inbox-thread-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px; /* space for FAB */
+  position: relative;
+}
+
+.inbox-thread-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.inbox-thread-read {
+  background-color: var(--bg-main);
+  color: var(--text-muted);
+}
+
+.inbox-thread-unread {
+  background-color: rgba(255, 255, 255, 0.03);
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.inbox-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: 16px;
+  min-width: 60px;
+}
+
+.inbox-star-btn {
+  display: flex;
+  align-items: center;
+}
+
+.inbox-participants {
+  width: 200px;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inbox-count-badge {
+  background-color: var(--bg-surface);
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.inbox-badges-wrapper {
+  display: flex;
+  gap: 6px;
+  margin-right: 12px;
+  align-items: center;
+}
+
+.inbox-status-badge-pending {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.inbox-status-badge-closed {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.inbox-assigned-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: white;
+}
+
+.inbox-thread-subject-wrapper {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.inbox-thread-subject-text {
+  margin-right: 8px;
+}
+
+.inbox-snippet {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.inbox-thread-date {
+  width: 100px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.fab-compose {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  background-color: var(--primary);
+  color: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 10;
+}
+
+.fab-compose:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.6);
+  background-color: var(--primary-hover);
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+  .inbox-toolbar {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  
+  .inbox-search-input {
+    width: 100%;
+    min-width: 100%;
+    margin-top: 8px;
+    order: 3;
+  }
+
+  .inbox-thread-row {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  
+  .inbox-participants {
+    width: 100%;
+    margin-bottom: 4px;
+    font-size: 15px;
+  }
+  
+  .inbox-thread-subject-wrapper {
+    width: 100%;
+    margin-bottom: 4px;
+    font-size: 13px;
+    white-space: normal;
+  }
+  
+  .inbox-thread-date {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    width: auto;
+  }
+  
+  .inbox-row-actions {
+    display: none;
+  }
+
+  .fab-compose {
+    position: fixed;
+    bottom: 24px;
+    right: 16px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+}
