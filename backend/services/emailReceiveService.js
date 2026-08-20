@@ -7,7 +7,11 @@ import Notification from '../models/Notification.js';
 import { analyzeSpam } from './spamService.js';
 
 import getResend from '../config/resend.js';
-import { escapeRegExp } from 'lodash-es';
+
+// Escape string for RegExp
+const escapeRegExp = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+};
 
 /**
  * Process an inbound email from Resend webhook
