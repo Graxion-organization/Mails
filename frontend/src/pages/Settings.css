@@ -458,3 +458,150 @@
     display: none;
   }
 }
+
+/* DNS Table Styles */
+.dns-instructions-block {
+  margin-top: 16px;
+  width: 100%;
+  background-color: rgba(24, 24, 27, 0.6);
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #27272a;
+}
+
+.dns-title {
+  margin-bottom: 16px;
+  color: #e4e4e7;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.dns-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #27272a;
+}
+
+.dns-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.dns-table th {
+  background-color: #18181b;
+  padding: 12px 16px;
+  color: #a1a1aa;
+  font-weight: 500;
+  border-bottom: 1px solid #27272a;
+  white-space: nowrap;
+}
+
+.dns-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #27272a;
+  background-color: #09090b;
+}
+
+.dns-table tr:last-child td {
+  border-bottom: none;
+}
+
+.dns-type {
+  background-color: rgba(168, 85, 247, 0.15);
+  color: #e879f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.dns-copyable {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.dns-copyable span {
+  font-family: monospace;
+  color: #e4e4e7;
+  word-break: break-all;
+}
+
+.dns-copyable button {
+  background: transparent;
+  border: none;
+  color: #71717a;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.dns-copyable button:hover {
+  background: #27272a;
+  color: #fff;
+}
+
+.dns-note {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 24px 16px;
+  }
+  
+  .settings-layout {
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .settings-sidebar {
+    width: 100%;
+  }
+  
+  .sidebar-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  
+  .group-label {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  
+  .nav-btn {
+    width: auto;
+    padding: 8px 12px;
+  }
+  
+  .settings-card {
+    padding: 20px;
+  }
+  
+  .list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .item-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

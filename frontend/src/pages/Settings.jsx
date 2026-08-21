@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMail } from '../context/MailContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { Settings as SettingsIcon, Globe, Mail, Users, Building, Plus, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
+import { Settings as SettingsIcon, Globe, Mail, Users, Building, Plus, Trash2, Loader2, CheckCircle2, Copy, Info } from 'lucide-react';
 import './Settings.css';
 
 export default function Settings() {
@@ -98,6 +98,11 @@ export default function Settings() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard');
   };
 
   const handleRemoveDomain = async (domainId) => {
@@ -312,27 +317,80 @@ export default function Settings() {
                       </div>
                       
                       {d.status !== 'verified' && (
-                        <div style={{ marginTop: '16px', width: '100%', backgroundColor: 'rgba(24, 24, 27, 0.6)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px' }}>
-                          <p style={{ marginBottom: '12px', color: 'var(--text-main)', fontWeight: 500 }}>Please add the following DNS records to your domain provider to verify and use this domain:</p>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <div>
-                              <span style={{ color: 'var(--text-muted)' }}>TXT Record (Ownership Verification):</span>
-                              <code style={{ display: 'block', padding: '8px', background: '#09090b', border: '1px solid #27272a', borderRadius: '6px', marginTop: '4px', wordBreak: 'break-all' }}>
-                                Name: _graxion.{d.domain} &nbsp;&nbsp;&nbsp; Value: {d.verification?.token}
-                              </code>
-                            </div>
-                            <div>
-                              <span style={{ color: 'var(--text-muted)' }}>MX Record (Receive Email):</span>
-                              <code style={{ display: 'block', padding: '8px', background: '#09090b', border: '1px solid #27272a', borderRadius: '6px', marginTop: '4px', wordBreak: 'break-all' }}>
-                                Name: {d.domain} &nbsp;&nbsp;&nbsp; Value: mx.graxion.in &nbsp;&nbsp;&nbsp; Priority: 10
-                              </code>
-                            </div>
-                            <div>
-                              <span style={{ color: 'var(--text-muted)' }}>TXT Record (SPF / Deliverability):</span>
-                              <code style={{ display: 'block', padding: '8px', background: '#09090b', border: '1px solid #27272a', borderRadius: '6px', marginTop: '4px', wordBreak: 'break-all' }}>
-                                Name: {d.domain} &nbsp;&nbsp;&nbsp; Value: v=spf1 include:spf.graxion.in ~all
-                              </code>
-                            </div>
+                        <div className="dns-instructions-block">
+                          <div className="dns-title">Please add these DNS records to your domain provider to verify ownership and enable email delivery:</div>
+                          
+                          <div className="dns-table-container">
+                            <table className="dns-table">
+                              <thead>
+                                <tr>
+                                  <th>Type</th>
+                                  <th>Name / Host</th>
+                                  <th>Value</th>
+                                  <th>Priority</th>
+                                  <th>Proxy Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  <td><span className="dns-type">TXT</span></td>
+                                  <td>
+                                    <div className="dns-copyable">
+                                      <span>_graxion.{d.domain}</span>
+                                      <button onClick={() => handleCopy(`_graxion.${d.domain}`)} title="Copy"><Copy size={12}/></button>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <div className="dns-copyable">
+                                      <span className="truncate-value" title={d.verification?.token}>{d.verification?.token}</span>
+                                      <button onClick={() => handleCopy(d.verification?.token)} title="Copy"><Copy size={12}/></button>
+                                    </div>
+                                  </td>
+                                  <td>-</td>
+                                  <td>DNS Only</td>
+                                </tr>
+                                
+                                <tr>
+                                  <td><span className="dns-type">MX</span></td>
+                                  <td>
+                                    <div className="dns-copyable">
+                                      <span>{d.domain}</span>
+                                      <button onClick={() => handleCopy(d.domain)} title="Copy"><Copy size={12}/></button>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <div className="dns-copyable">
+                                      <span>mx.graxion.in</span>
+                                      <button onClick={() => handleCopy('mx.graxion.in')} title="Copy"><Copy size={12}/></button>
+                                    </div>
+                                  </td>
+                                  <td>10</td>
+                                  <td>DNS Only</td>
+                                </tr>
+
+                                <tr>
+                                  <td><span className="dns-type">TXT</span></td>
+                                  <td>
+                                    <div className="dns-copyable">
+                                      <span>{d.domain}</span>
+                                      <button onClick={() => handleCopy(d.domain)} title="Copy"><Copy size={12}/></button>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <div className="dns-copyable">
+                                      <span>v=spf1 include:spf.graxion.in ~all</span>
+                                      <button onClick={() => handleCopy('v=spf1 include:spf.graxion.in ~all')} title="Copy"><Copy size={12}/></button>
+                                    </div>
+                                  </td>
+                                  <td>-</td>
+                                  <td>DNS Only</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          
+                          <div className="dns-note">
+                            <Info size={14} /> DNS propagation may take up to 24-48 hours, though usually happens within minutes.
                           </div>
                         </div>
                       )}
