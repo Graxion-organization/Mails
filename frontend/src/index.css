@@ -304,15 +304,16 @@ button {
   font-size: 14px;
   line-height: 1.6;
   padding: 24px;
-  background-color: #ffffff;
-  color: #1f2937;
+  background-color: transparent;
+  color: var(--text-main);
   overflow-x: auto;
 }
 
-.thread-message-body img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
+.thread-message-body blockquote {
+  border-left: 2px solid var(--primary);
+  margin-left: 0;
+  padding-left: 16px;
+  color: var(--text-muted);
 }
 
 .thread-message-body a {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Reply, Forward, MoreVertical, Archive, Trash2, Eye, User, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Reply, Forward, MoreVertical, Archive, Trash2, Eye, User, FileText, CheckCircle2, Tag, Paperclip, Smile, Type, ChevronDown } from 'lucide-react';
 import api from '../utils/api';
 import { format } from 'date-fns';
 import { useSocket } from '../context/SocketContext';
@@ -156,15 +156,18 @@ export default function ThreadView() {
           
           <div className="thread-divider"></div>
           
-          <select 
-            className="thread-status-select" 
-            value={thread.status} 
-            onChange={e => updateStatus(e.target.value)}
-          >
-            <option value="open">Open</option>
-            <option value="pending">Pending</option>
-            <option value="closed">Closed</option>
-          </select>
+          <div className="thread-status-container">
+            <div className="status-dot"></div>
+            <select 
+              className="thread-status-select-bare" 
+              value={thread.status} 
+              onChange={e => updateStatus(e.target.value)}
+            >
+              <option value="open">Open</option>
+              <option value="pending">Pending</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
           
           <div className="thread-dropdown">
             <button className="thread-btn-outline" onClick={() => setAssignDropdownOpen(!assignDropdownOpen)}>
@@ -189,6 +192,8 @@ export default function ThreadView() {
           
           <button className="thread-icon-btn" title="Archive"><Archive size={16} /></button>
           <button className="thread-icon-btn" title="Delete"><Trash2 size={16} /></button>
+          <button className="thread-icon-btn" title="Tags"><Tag size={16} /></button>
+          <button className="thread-icon-btn" title="More"><MoreVertical size={16} /></button>
         </div>
         
         <div className="thread-toolbar-right">
@@ -210,7 +215,9 @@ export default function ThreadView() {
       <div className="thread-content">
         <div className="thread-subject-header">
           <h2 className="thread-subject">{thread.subject}</h2>
-          <div className="thread-labels">
+          <div className="thread-count-badge">{messages.length} email{messages.length !== 1 ? 's' : ''}</div>
+        </div>
+        <div className="thread-labels">
             {thread.labels?.map(l => (
               <span key={l._id} className="thread-label-badge" style={{backgroundColor: l.color}}>{l.name}</span>
             ))}
@@ -220,79 +227,62 @@ export default function ThreadView() {
         <div className="thread-messages-list">
           {messages.map((msg, index) => (
             <div key={msg._id} className="thread-message-group">
+              {index > 0 && (
+                <div className="thread-message-divider">
+                  <span className="thread-divider-pill">{index} previous message{index !== 1 ? 's' : ''}</span>
+                </div>
+              )}
               {/* Actual Message Card */}
               <div className="thread-message-card">
                 <div className="thread-message-header">
-                  <div className="thread-sender-avatar">
-                    {msg.from.name ? msg.from.name[0].toUpperCase() : msg.from.email[0].toUpperCase()}
-                  </div>
-                  <div className="thread-sender-info">
-                    <div className="thread-sender-name">
-                      {msg.from.name || msg.from.email}
-                      <span className="thread-sender-email">&lt;{msg.from.email}&gt;</span>
+                  <div className="thread-message-header-left">
+                    <div className="thread-sender-avatar">
+                      {msg.from.name ? msg.from.name[0].toUpperCase() : msg.from.email[0].toUpperCase()}
                     </div>
-                    <div className="thread-to-info">
-                      to {msg.to.map(t => t.name || t.email).join(', ')}
-                    </div>
-                  </div>
-                  <div className="thread-message-meta">
-                    <div className="thread-date">{format(new Date(msg.createdAt), 'MMM d, yyyy, h:mm a')}</div>
-                    <div className="thread-message-actions">
-                      <button className="thread-icon-btn-small" onClick={() => setActiveNoteMessageId(activeNoteMessageId === msg._id ? null : msg._id)} title="Add Internal Note">
-                        <FileText size={14} />
-                      </button>
-                      <button 
-                        className="thread-icon-btn-small"
-                        onClick={() => {
-                          const replyToEmail = msg.from.email;
-                          const subjectPrefix = msg.subject.startsWith('Re:') ? '' : 'Re: ';
-                          openComposer({
-                            type: 'reply',
-                            messageId: msg._id,
-                            to: replyToEmail,
-                            subject: `${subjectPrefix}${msg.subject}`,
-                            body: `\n\n\n--- On ${format(new Date(msg.createdAt), 'PPpp')}, ${msg.from.name || msg.from.email} wrote ---\n${msg.bodyText || ''}`
-                          });
-                        }}
-                        title="Reply"
-                      >
-                        <Reply size={14} />
-                      </button>
-                      
-                      {/* Forward Button added here */}
-                      <button 
-                        className="thread-icon-btn-small"
-                        onClick={() => {
-                          const subjectPrefix = msg.subject.startsWith('Fwd:') ? '' : 'Fwd: ';
-                          openComposer({
-                            type: 'forward',
-                            messageId: msg._id,
-                            to: '',
-                            subject: `${subjectPrefix}${msg.subject}`,
-                            body: `\n\n\n---------- Forwarded message ---------\nFrom: ${msg.from.name} <${msg.from.email}>\nDate: ${format(new Date(msg.createdAt), 'PPpp')}\nSubject: ${msg.subject}\nTo: ${msg.to.map(t => t.email).join(', ')}\n\n${msg.bodyText || ''}`
-                          });
-                        }}
-                        title="Forward"
-                      >
-                        <Forward size={14} />
-                      </button>
-
-                      {/* More Options Dropdown */}
-                      <div className="thread-dropdown">
-                        <button 
-                          className="thread-icon-btn-small" 
-                          onClick={() => setMoreOptionsId(moreOptionsId === msg._id ? null : msg._id)}
-                        >
-                          <MoreVertical size={14} />
-                        </button>
-                        {moreOptionsId === msg._id && (
-                          <div className="thread-dropdown-menu" style={{right: 0, left: 'auto'}}>
-                            <div className="thread-dropdown-item">Copy Link</div>
-                            <div className="thread-dropdown-item">Mark Unread</div>
-                            <div className="thread-dropdown-item">Print</div>
-                          </div>
-                        )}
+                    <div className="thread-sender-info">
+                      <div className="thread-sender-name">
+                        {msg.from.name || msg.from.email}
                       </div>
+                      <div className="thread-sender-email-text">&lt;{msg.from.email}&gt;</div>
+                      <div className="thread-to-info">
+                        to <span className="thread-to-email">{msg.to.map(t => t.email).join(', ')}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="thread-message-header-right">
+                    <span className="thread-date">{format(new Date(msg.createdAt), 'MMM d, yyyy, h:mm a')}</span>
+                    <button 
+                      className="thread-icon-btn-small reply-btn-header"
+                      onClick={() => {
+                        const replyToEmail = msg.from.email;
+                        const subjectPrefix = msg.subject.startsWith('Re:') ? '' : 'Re: ';
+                        openComposer({
+                          type: 'reply',
+                          messageId: msg._id,
+                          to: replyToEmail,
+                          subject: `${subjectPrefix}${msg.subject}`,
+                          body: `\n\n\n--- On ${format(new Date(msg.createdAt), 'PPpp')}, ${msg.from.name || msg.from.email} wrote ---\n${msg.bodyText || ''}`
+                        });
+                      }}
+                      title="Reply"
+                    >
+                      <Reply size={16} />
+                    </button>
+                    <div className="thread-dropdown">
+                      <button 
+                        className="thread-icon-btn-small" 
+                        onClick={() => setMoreOptionsId(moreOptionsId === msg._id ? null : msg._id)}
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      {moreOptionsId === msg._id && (
+                        <div className="thread-dropdown-menu" style={{right: 0, left: 'auto'}}>
+                          <div className="thread-dropdown-item">Copy Link</div>
+                          <div className="thread-dropdown-item">Mark Unread</div>
+                          <div className="thread-dropdown-item">Print</div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -345,6 +335,36 @@ export default function ThreadView() {
               )}
             </div>
           ))}
+          
+          {/* Reply Placeholder */}
+          {messages.length > 0 && (
+            <div className="thread-reply-placeholder" onClick={() => {
+              const lastMsg = messages[messages.length - 1];
+              openComposer({
+                  type: 'reply',
+                  messageId: lastMsg._id,
+                  to: lastMsg.from.email,
+                  subject: lastMsg.subject.startsWith('Re:') ? lastMsg.subject : 'Re: ' + lastMsg.subject,
+                  body: `\n\n\n--- On ${format(new Date(lastMsg.createdAt), 'PPpp')}, ${lastMsg.from.name || lastMsg.from.email} wrote ---\n${lastMsg.bodyText || ''}`
+              });
+            }}>
+              <div className="reply-placeholder-header">
+                <div className="thread-sender-avatar small-avatar">Y</div>
+                <span className="reply-placeholder-text">Reply...</span>
+              </div>
+              <div className="reply-placeholder-toolbar">
+                <button className="btn-primary reply-btn-bottom">
+                  <Reply size={14} style={{marginRight: 6}}/> Reply <ChevronDown size={14} style={{marginLeft: 6}}/>
+                </button>
+                <div className="reply-placeholder-icons">
+                   <Paperclip size={18}/>
+                   <Smile size={18}/>
+                   <Type size={18}/>
+                </div>
+                <Trash2 size={18} className="reply-placeholder-trash"/>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
