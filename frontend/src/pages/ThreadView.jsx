@@ -137,7 +137,7 @@ export default function ThreadView() {
   const handleTextareaInput = (e) => {
     setReplyText(e.target.value);
     e.target.style.height = 'auto';
-    e.target.style.height = Math.min(Math.max(e.target.scrollHeight, 120), 240) + 'px';
+    e.target.style.height = Math.min(Math.max(e.target.scrollHeight, 40), 240) + 'px';
   };
 
   if (loading) {
@@ -299,6 +299,7 @@ export default function ThreadView() {
                 {/* HTML content block */}
                 <div className="p-6 text-[14px] leading-relaxed text-[#e5e7eb] break-words whitespace-normal overflow-hidden max-w-full">
                   <div 
+                    className="message-html-content"
                     dangerouslySetInnerHTML={{ __html: msg.bodyHtml || `<div style="white-space: pre-wrap; font-family: inherit;">${msg.bodyText || ''}</div>` }}
                   />
                 </div>
@@ -359,7 +360,7 @@ export default function ThreadView() {
             </div>
             <textarea 
               ref={textareaRef}
-              className="w-full bg-transparent border-none text-main text-[14px] outline-none resize-none min-h-[120px] max-h-[240px]"
+              className="w-full bg-transparent border-none text-main text-[14px] outline-none resize-none min-h-[40px] max-h-[240px] pt-1.5"
               placeholder="Reply..."
               value={replyText}
               onChange={handleTextareaInput}
@@ -373,7 +374,7 @@ export default function ThreadView() {
                 onClick={() => {
                   toast.success("Reply sent!");
                   setReplyText("");
-                  textareaRef.current.style.height = '120px';
+                  textareaRef.current.style.height = '40px';
                 }}
                 disabled={!replyText.trim()}
               >
@@ -395,7 +396,7 @@ export default function ThreadView() {
             <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-danger hover:bg-danger/10 transition-colors"
               onClick={() => {
                 setReplyText("");
-                textareaRef.current.style.height = '120px';
+                textareaRef.current.style.height = '40px';
               }}
             >
               <Trash2 size={18}/>

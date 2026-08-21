@@ -30,6 +30,14 @@
     border-radius: 4px;
     color: #9ca3af;
   }
+  .message-html-content img {
+    max-width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin: 8px 0;
+  }
 }
 
 * {
