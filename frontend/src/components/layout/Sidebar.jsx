@@ -20,36 +20,36 @@ export default function Sidebar({ isOpen, onClose }) {
   ];
 
   return (
-    <div className={`mail-sidebar ${isOpen ? 'open' : ''}`}>
+    <div className={`w-[260px] bg-sidebar border-r border-white/5 flex flex-col transition-transform duration-300 z-50 shrink-0 ${isOpen ? 'translate-x-0 fixed inset-y-0 left-0' : '-translate-x-full fixed inset-y-0 left-0 lg:translate-x-0 lg:static'}`}>
       {/* Mailbox Selector */}
-      <div className="sidebar-selector-container">
+      <div className="p-4 border-b border-white/5 relative">
         <button 
-          className="sidebar-selector-btn"
+          className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors text-left"
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         >
-          <div className="sidebar-selector-info">
-            <div className="sidebar-selector-name">{activeMailbox?.displayName || 'Select Mailbox'}</div>
-            <div className="sidebar-selector-address">{activeMailbox?.address || '...'}</div>
+          <div className="flex flex-col overflow-hidden">
+            <div className="text-[14px] font-semibold text-main truncate">{activeMailbox?.displayName || 'Select Mailbox'}</div>
+            <div className="text-[12px] text-secondary truncate">{activeMailbox?.address || '...'}</div>
           </div>
-          <ChevronDown size={16} color="var(--text-muted)" />
+          <ChevronDown size={16} className="text-secondary shrink-0 ml-2" />
         </button>
         
         {isDropdownOpen && (
-          <div className="sidebar-dropdown">
+          <div className="absolute top-full left-4 right-4 mt-1 bg-surface border border-white/10 rounded-xl shadow-2xl py-1 z-50 max-h-[300px] overflow-y-auto">
             {mailboxes.map(mb => (
               <button 
                 key={mb._id} 
-                className="sidebar-dropdown-item"
+                className="w-full flex items-center justify-between px-4 py-2 hover:bg-white/5 transition-colors text-left"
                 onClick={() => {
                   setActiveMailbox(mb);
                   setIsDropdownOpen(false);
                 }}
               >
-                <div className="sidebar-dropdown-info">
-                  <div className="sidebar-dropdown-name">{mb.displayName}</div>
-                  <div className="sidebar-dropdown-address">{mb.address}</div>
+                <div className="flex flex-col overflow-hidden">
+                  <div className="text-[13px] font-medium text-main truncate">{mb.displayName}</div>
+                  <div className="text-[12px] text-secondary truncate">{mb.address}</div>
                 </div>
-                {activeMailbox?._id === mb._id && <Check size={16} color="var(--primary)" />}
+                {activeMailbox?._id === mb._id && <Check size={16} className="text-primary shrink-0 ml-2" />}
               </button>
             ))}
           </div>
@@ -57,46 +57,47 @@ export default function Sidebar({ isOpen, onClose }) {
       </div>
 
       {/* Compose Button */}
-      <div className="sidebar-compose-container">
-        <button className="btn btn-primary sidebar-compose-btn" onClick={() => openComposer()}>
+      <div className="p-4">
+        <button 
+          className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg text-[14px] font-medium transition-colors"
+          onClick={() => openComposer()}
+        >
           <PenBox size={18} />
           Compose
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="sidebar-nav">
+      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
         {navItems.map(item => (
           <NavLink 
             key={item.id} 
             to={item.path}
             onClick={onClose}
-            className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}
+            className={({ isActive }) => `flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-[14px] font-medium ${isActive ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-white/5 hover:text-main'}`}
           >
-            <div className="sidebar-nav-inner">
-              <item.icon size={18} />
+            <div className="flex items-center gap-3">
+              <item.icon size={18} className={({ isActive }) => isActive ? 'text-primary' : 'text-secondary'} />
               <span>{item.label}</span>
             </div>
             {item.count > 0 && (
-              <span className="sidebar-badge">{item.count}</span>
+              <span className="bg-primary/20 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full">
+                {item.count}
+              </span>
             )}
           </NavLink>
         ))}
       </nav>
       
-      <div className="sidebar-spacer"></div>
-
       {/* Settings */}
-      <nav className="sidebar-nav">
+      <nav className="p-3 border-t border-white/5">
         <NavLink 
           to="/settings"
           onClick={onClose}
-          className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}
+          className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-[14px] font-medium ${isActive ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-white/5 hover:text-main'}`}
         >
-          <div className="sidebar-nav-inner">
-            <Settings size={18} />
-            <span>Settings</span>
-          </div>
+          <Settings size={18} />
+          <span>Settings</span>
         </NavLink>
       </nav>
     </div>

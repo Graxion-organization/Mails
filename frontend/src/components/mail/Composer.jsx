@@ -53,42 +53,48 @@ export default function Composer() {
 
   if (isMinimized) {
     return (
-      <div style={styles.minimizedContainer} onClick={() => setIsMinimized(false)}>
-        <div style={styles.header}>
-          <span>New Message</span>
-          <div style={styles.actions}>
-            <button onClick={(e) => { e.stopPropagation(); closeComposer(); }}><X size={16} /></button>
-          </div>
+      <div 
+        className="fixed bottom-6 right-6 lg:right-10 w-[300px] h-[48px] bg-surface border border-white/10 rounded-t-xl flex items-center justify-between px-4 cursor-pointer shadow-2xl z-[100] hover:bg-surface-hover transition-colors" 
+        onClick={() => setIsMinimized(false)}
+      >
+        <span className="text-[14px] font-medium text-main">New Message</span>
+        <div className="flex items-center">
+          <button 
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"
+            onClick={(e) => { e.stopPropagation(); closeComposer(); }}
+          >
+            <X size={16} />
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`mail-composer animate-slide-up ${isFullScreen ? 'full-screen' : ''}`}>
-      <div style={styles.header}>
-        <div style={styles.headerTitle}>New Message</div>
-        <div style={styles.actions}>
-          <button onClick={() => setIsMinimized(true)} style={styles.actionBtn}><Minus size={16} /></button>
-          <button onClick={() => setIsFullScreen(!isFullScreen)} style={styles.actionBtn}><Maximize2 size={16} /></button>
-          <button onClick={closeComposer} style={styles.actionBtn}><X size={16} /></button>
+    <div className={`fixed z-[100] bg-bg border border-white/10 flex flex-col shadow-2xl animate-slide-up ${isFullScreen ? 'inset-4 rounded-xl' : 'bottom-6 right-6 lg:right-10 w-[600px] h-[550px] rounded-xl'}`}>
+      <div className="flex items-center justify-between px-4 py-3 bg-surface border-b border-white/5 rounded-t-xl shrink-0">
+        <div className="text-[14px] font-medium text-main">New Message</div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setIsMinimized(true)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"><Minus size={16} /></button>
+          <button onClick={() => setIsFullScreen(!isFullScreen)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"><Maximize2 size={16} /></button>
+          <button onClick={closeComposer} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"><X size={16} /></button>
         </div>
       </div>
       
-      <div style={styles.body}>
-        <div style={styles.inputRow}>
-          <span style={styles.label}>To</span>
+      <div className="flex-1 flex flex-col min-h-0 bg-bg">
+        <div className="flex items-center px-4 py-2 border-b border-white/5">
+          <span className="text-[14px] text-secondary w-12 shrink-0">To</span>
           <input 
-            style={styles.input} 
+            className="flex-1 bg-transparent border-none outline-none text-[14px] text-main placeholder-secondary/50 py-1"
             value={to}
             onChange={(e) => setTo(e.target.value)}
             placeholder="recipient@example.com"
           />
         </div>
         
-        <div style={styles.inputRow}>
+        <div className="flex items-center px-4 py-2 border-b border-white/5">
           <input 
-            style={styles.subjectInput} 
+            className="w-full bg-transparent border-none outline-none text-[14px] font-medium text-main placeholder-secondary/50 py-1"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Subject"
@@ -96,184 +102,32 @@ export default function Composer() {
         </div>
         
         <textarea 
-          style={styles.editor} 
+          className="flex-1 w-full bg-transparent border-none outline-none text-[14px] text-main p-4 resize-none leading-relaxed placeholder-secondary/50"
           value={body}
           onChange={(e) => setBody(e.target.value)}
         />
       </div>
       
-      <div style={styles.footer}>
-        <div style={styles.footerLeft}>
-          <div style={styles.sendGroup}>
+      <div className="flex items-center justify-between px-4 py-3 bg-surface border-t border-white/5 rounded-b-xl shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center bg-primary rounded-lg">
             <button 
-              className="btn btn-primary" 
-              style={styles.sendBtn} 
+              className="px-5 py-2 text-[14px] font-medium text-white hover:bg-white/10 transition-colors rounded-l-lg border-r border-white/20 disabled:opacity-50" 
               onClick={handleSend}
               disabled={isSending}
             >
               {isSending ? 'Sending...' : 'Send'}
             </button>
-            <button className="btn btn-primary" style={styles.scheduleBtn}>
+            <button className="px-3 py-2 text-white hover:bg-white/10 transition-colors rounded-r-lg">
               <Clock size={16} />
             </button>
           </div>
-          <button style={styles.toolBtn}><Paperclip size={18} /></button>
+          <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"><Paperclip size={18} /></button>
         </div>
-        <div style={styles.footerRight}>
-          <button style={styles.toolBtn} onClick={closeComposer}><Trash2 size={18} /></button>
+        <div className="flex items-center">
+          <button onClick={closeComposer} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-danger/10 text-secondary hover:text-danger transition-colors"><Trash2 size={18} /></button>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    position: 'fixed',
-    bottom: 0,
-    right: '80px',
-    width: '560px',
-    height: '600px',
-    backgroundColor: 'var(--bg-main)',
-    border: '1px solid var(--border-color)',
-    borderBottom: 'none',
-    borderTopLeftRadius: '12px',
-    borderTopRightRadius: '12px',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 -10px 40px rgba(0,0,0,0.4)',
-    zIndex: 100,
-  },
-  fullScreen: {
-    top: '40px',
-    bottom: '40px',
-    right: '80px',
-    left: '80px',
-    width: 'auto',
-    height: 'auto',
-    borderRadius: '12px',
-    borderBottom: '1px solid var(--border-color)',
-  },
-  minimizedContainer: {
-    position: 'fixed',
-    bottom: 0,
-    right: '80px',
-    width: '260px',
-    backgroundColor: 'var(--bg-surface)',
-    border: '1px solid var(--border-color)',
-    borderBottom: 'none',
-    borderTopLeftRadius: '8px',
-    borderTopRightRadius: '8px',
-    cursor: 'pointer',
-    zIndex: 100,
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px 16px',
-    backgroundColor: 'var(--bg-surface)',
-    borderTopLeftRadius: '12px',
-    borderTopRightRadius: '12px',
-    borderBottom: '1px solid var(--border-color)',
-  },
-  headerTitle: {
-    fontSize: '14px',
-    fontWeight: '500',
-  },
-  actions: {
-    display: 'flex',
-    gap: '8px',
-  },
-  actionBtn: {
-    color: 'var(--text-muted)',
-    padding: '4px',
-    borderRadius: '4px',
-  },
-  body: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-  },
-  inputRow: {
-    display: 'flex',
-    alignItems: 'center',
-    borderBottom: '1px solid var(--border-color)',
-    padding: '4px 16px',
-  },
-  label: {
-    color: 'var(--text-muted)',
-    fontSize: '14px',
-    width: '40px',
-  },
-  input: {
-    flex: 1,
-    background: 'none',
-    border: 'none',
-    color: 'var(--text-main)',
-    padding: '8px 0',
-    outline: 'none',
-    fontSize: '14px',
-  },
-  subjectInput: {
-    width: '100%',
-    background: 'none',
-    border: 'none',
-    color: 'var(--text-main)',
-    padding: '12px 0',
-    outline: 'none',
-    fontSize: '14px',
-    fontWeight: '500',
-  },
-  editor: {
-    flex: 1,
-    width: '100%',
-    background: 'none',
-    border: 'none',
-    color: 'var(--text-main)',
-    padding: '16px',
-    outline: 'none',
-    fontSize: '14px',
-    resize: 'none',
-    fontFamily: 'inherit',
-  },
-  footer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px 16px',
-    borderTop: '1px solid var(--border-color)',
-    backgroundColor: 'var(--bg-main)',
-  },
-  footerLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-  },
-  sendGroup: {
-    display: 'flex',
-    borderRadius: '8px',
-    overflow: 'hidden',
-  },
-  sendBtn: {
-    borderRadius: 0,
-    padding: '8px 24px',
-  },
-  scheduleBtn: {
-    borderRadius: 0,
-    borderLeft: '1px solid rgba(0,0,0,0.2)',
-    padding: '8px 12px',
-  },
-  footerRight: {
-    display: 'flex',
-  },
-  toolBtn: {
-    color: 'var(--text-muted)',
-    padding: '8px',
-    borderRadius: '4px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }
-};

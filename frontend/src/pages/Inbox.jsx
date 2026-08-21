@@ -4,7 +4,6 @@ import { useMail } from '../context/MailContext';
 import api from '../utils/api';
 import { formatDistanceToNow } from 'date-fns';
 import { Star, Archive, Trash2, User, Search, PenSquare } from 'lucide-react';
-import './Inbox.css';
 
 export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
   const { activeOrg, activeMailbox, openComposer } = useMail();
@@ -62,8 +61,8 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
 
   if (loading) {
     return (
-      <div className="inbox-loading-container">
-        <div className="loader">Loading messages...</div>
+      <div className="flex-1 flex items-center justify-center h-full text-secondary">
+        <div className="animate-pulse">Loading messages...</div>
       </div>
     );
   }
@@ -96,32 +95,38 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
   };
 
   return (
-    <div className="inbox-container">
-      <div className="inbox-toolbar">
-        <div className="inbox-toolbar-left">
-          <input type="checkbox" className="inbox-checkbox" />
-          <button className="inbox-tool-btn"><Archive size={16} /></button>
-          <button className="inbox-tool-btn"><Trash2 size={16} /></button>
+    <div className="flex flex-col h-full bg-bg relative overflow-hidden">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2 border-b border-white/5 bg-surface sticky top-0 z-10 shrink-0 min-h-[56px]">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5 text-secondary hover:text-main transition-colors group">
+            <div className="w-4 h-4 border border-secondary group-hover:border-main rounded-sm"></div>
+          </button>
+          <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5 text-secondary hover:text-main transition-colors">
+            <Archive size={18} />
+          </button>
+          <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-danger/10 text-secondary hover:text-danger transition-colors">
+            <Trash2 size={18} />
+          </button>
           
           {mode === 'search' && (
-            <form onSubmit={handleSearch} style={{display: 'flex', alignItems: 'center'}}>
+            <form onSubmit={handleSearch} className="flex items-center ml-2 bg-bg border border-white/10 rounded-lg px-3 py-1.5 focus-within:border-primary transition-colors">
               <input 
                 type="text" 
                 placeholder="Search emails..." 
-                className="inbox-search-input"
+                className="bg-transparent border-none outline-none text-main text-[14px] w-full max-w-[200px]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </form>
           )}
         </div>
-        <div className="inbox-toolbar-right">
-          <span className="pagination-text">1-{threads.length > 0 ? threads.length : 0} of {threads.length > 0 ? threads.length : 0}</span>
+        <div className="text-[13px] text-secondary font-medium hidden sm:block">
+          1-{threads.length > 0 ? threads.length : 0} of {threads.length > 0 ? threads.length : 0}
         </div>
       </div>
 
       <div 
-        className="inbox-thread-list"
+        className="flex-1 overflow-y-auto px-2 sm:px-4 py-3 space-y-1"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -139,12 +144,12 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
            {refreshing ? 'Refreshing...' : 'Pull down to refresh'}
         </div>
         {threads.length === 0 ? (
-          <div className="inbox-empty-container">
-            <div className="inbox-empty-icon">📬</div>
-            <h3>No messages found</h3>
-            <p>Your {mode === 'search' ? 'search results' : folder} is empty.</p>
-            <button className="btn btn-primary" onClick={() => openComposer()}>
-              <PenSquare size={16} style={{marginRight: 8}} /> Compose New Email
+          <div className="flex flex-col items-center justify-center h-[60vh] text-center max-w-md mx-auto">
+            <div className="text-6xl mb-6 opacity-80">📬</div>
+            <h3 className="text-xl font-semibold text-main mb-2">No messages found</h3>
+            <p className="text-secondary text-[14px] mb-8">Your {mode === 'search' ? 'search results' : folder} is empty.</p>
+            <button className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-medium transition-transform hover:scale-105" onClick={() => openComposer()}>
+              <PenSquare size={18} /> Compose New Email
             </button>
           </div>
         ) : (
@@ -154,58 +159,62 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
             return (
               <div 
                 key={thread._id} 
-                className={`inbox-thread-row ${isUnread ? 'inbox-thread-unread' : 'inbox-thread-read'}`}
+                className={`flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3.5 sm:py-4 rounded-[16px] cursor-pointer transition-all border border-transparent hover:border-white/5 ${isUnread ? 'bg-white/[0.03] shadow-sm' : 'hover:bg-white/[0.02]'}`}
                 onClick={() => navigate(`/thread/${thread._id}`)}
               >
-                <div className="inbox-row-actions" onClick={e => e.stopPropagation()}>
-                  <input type="checkbox" className="inbox-checkbox" />
+                <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                  <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-secondary transition-colors group hidden sm:flex">
+                    <div className="w-4 h-4 border border-secondary group-hover:border-main rounded-sm"></div>
+                  </button>
                   <button 
-                    className="inbox-star-btn" 
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors" 
                     onClick={(e) => toggleStar(e, thread._id, thread.isStarred)}
                   >
                     <Star 
                       size={18} 
                       fill={thread.isStarred ? '#f59e0b' : 'none'} 
-                      color={thread.isStarred ? '#f59e0b' : 'var(--text-muted)'} 
+                      color={thread.isStarred ? '#f59e0b' : '#6b7280'} 
                     />
                   </button>
                 </div>
                 
-                <div className="inbox-participants">
-                  {/* Status Badges for Outbound */}
-                  {thread.direction === 'outbound' && (
-                    <span className={thread.status === 'delivered' ? 'inbox-status-badge-closed' : 'inbox-status-badge-pending'}>
-                      {thread.status}
+                <div className="flex flex-col sm:flex-row sm:items-center min-w-0 flex-1 gap-1 sm:gap-4">
+                  <div className={`flex items-center gap-2 shrink-0 w-full sm:w-[180px] md:w-[220px] text-[14px] ${isUnread ? 'font-semibold text-main' : 'font-medium text-main/90'}`}>
+                    {/* Status Badges for Outbound */}
+                    {thread.direction === 'outbound' && (
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${thread.status === 'delivered' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
+                        {thread.status}
+                      </span>
+                    )}
+                    {/* Assigned indicator */}
+                    {thread.assignedTo && (
+                      <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0">
+                        <User size={12} />
+                      </div>
+                    )}
+                    <span className="truncate">
+                      {mode === 'search' 
+                        ? (thread.participants?.[0]?.name || thread.participants?.[0]?.email || 'Unknown')
+                        : folder === 'sent' 
+                          ? `To: ${thread.participants?.[0]?.name || thread.participants?.[0]?.email || 'Unknown'}`
+                          : (thread.participants?.[0]?.name || thread.participants?.[0]?.email?.split('@')[0] || 'Unknown')
+                      }
                     </span>
-                  )}
-                  {/* Assigned indicator */}
-                  {thread.assignedTo && (
-                    <div className="inbox-assigned-badge">
-                      <User size={12} />
-                    </div>
-                  )}
-                  <span>
-                    {mode === 'search' 
-                      ? (thread.participants?.[0]?.name || thread.participants?.[0]?.email || 'Unknown')
-                      : folder === 'sent' 
-                        ? `To: ${thread.participants?.[0]?.name || thread.participants?.[0]?.email || 'Unknown'}`
-                        : (thread.participants?.[0]?.name || thread.participants?.[0]?.email?.split('@')[0] || 'Unknown')
-                    }
-                  </span>
-                  {thread.messageCount > 1 && <span className="inbox-count-badge">{thread.messageCount}</span>}
-                </div>
-                
-                <div className="inbox-thread-subject-wrapper">
-                  <div className="inbox-badges-wrapper">
-                    {/* Any labels can go here */}
+                    {thread.messageCount > 1 && <span className="bg-white/10 text-main text-[11px] font-bold px-1.5 py-0.5 rounded-md ml-auto sm:ml-0">{thread.messageCount}</span>}
                   </div>
-                  <span className="inbox-thread-subject-text" style={{fontWeight: isUnread ? '600' : '400'}}>
-                    {thread.subject || '(No Subject)'}
-                  </span>
-                  <span className="inbox-snippet">- {thread.snippet || 'No content...'}</span>
+                  
+                  <div className="flex items-center min-w-0 flex-1 gap-2">
+                    <span className={`truncate text-[14px] ${isUnread ? 'font-semibold text-main' : 'text-main/90'}`}>
+                      {thread.subject || '(No Subject)'}
+                    </span>
+                    <span className="truncate text-[14px] text-secondary hidden sm:inline">
+                      <span className="mx-1 opacity-50">-</span>
+                      {thread.snippet || 'No content...'}
+                    </span>
+                  </div>
                 </div>
                 
-                <div className="inbox-thread-date">
+                <div className={`shrink-0 text-[12px] whitespace-nowrap pl-2 ${isUnread ? 'font-semibold text-primary' : 'text-secondary font-medium'}`}>
                   {formatDistanceToNow(new Date(thread.updatedAt), { addSuffix: true })}
                 </div>
               </div>
@@ -214,7 +223,10 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
         )}
       </div>
 
-      <button className="fab-compose" onClick={() => openComposer()} title="Compose Email">
+      <button 
+        className="fixed bottom-6 right-6 lg:hidden w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-transform z-20" 
+        onClick={() => openComposer()} 
+      >
         <PenSquare size={24} />
       </button>
     </div>
