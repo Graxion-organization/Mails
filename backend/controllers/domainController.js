@@ -17,10 +17,28 @@ export const addDomain = async (req, res) => {
     // Normalize domain
     const normalized = domainName.toLowerCase().trim().replace(/^www\./, '');
 
-    // Check if already exists
+    // Check if exactly exists
     const existing = await Domain.findOne({ domain: normalized });
     if (existing) {
       return res.status(409).json({ success: false, message: 'Domain is already registered' });
+    }
+
+    // Prevent registering subdomains if the parent domain belongs to another organization
+    const parts = normalized.split('.');
+    for (let i = 1; i < parts.length - 1; i++) {
+      const parentDomain = parts.slice(i).join('.');
+      const parentRecord = await Domain.findOne({ domain: parentDomain });
+      if (parentRecord && parentRecord.organization.toString() !== req.params.orgId) {
+        return res.status(403).json({ success: false, message: 'A parent domain is already registered by another organization' });
+      }
+    }
+
+    // Hard block for graxion reserved domains (in case the parent isn't registered yet)
+    if (normalized.includes('graxion.in') || normalized.includes('graxion.com') || normalized.includes('graxion.ai')) {
+      const parentRecord = await Domain.findOne({ domain: 'graxion.in' });
+      if (parentRecord && parentRecord.organization.toString() !== req.params.orgId) {
+        return res.status(403).json({ success: false, message: 'This is a reserved Graxion system domain' });
+      }
     }
 
     // Generate verification token
