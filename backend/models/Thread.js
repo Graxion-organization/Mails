@@ -62,6 +62,11 @@ const threadSchema = new mongoose.Schema({
     default: 'inbox',
     index: true,
   },
+  folders: [{
+    type: String,
+    enum: ['inbox', 'sent', 'drafts', 'archive', 'spam', 'trash'],
+    index: true,
+  }],
 
   // Shared Inbox Fields
   status: {

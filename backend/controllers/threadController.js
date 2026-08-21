@@ -17,7 +17,13 @@ export const listThreads = async (req, res) => {
       return res.status(400).json({ success: false, message: 'orgId is required' });
     }
 
-    const query = { organization: orgId, folder };
+    const query = { organization: orgId };
+    if (folder) {
+      query.$or = [
+        { folder: folder },
+        { folders: folder }
+      ];
+    }
 
     if (mailboxId) query.mailbox = mailboxId;
     if (category) query.category = category;
@@ -167,7 +173,7 @@ export const moveThread = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid folder' });
     }
 
-    const update = { folder };
+    const update = { folder, folders: [folder] };
     if (folder === 'trash') update.trashedAt = new Date();
     if (folder === 'inbox') update.trashedAt = null;
 
@@ -212,16 +218,16 @@ export const batchThreadAction = async (req, res) => {
 
     switch (action) {
       case 'archive':
-        updateQuery = { folder: 'archive' };
+        updateQuery = { folder: 'archive', folders: ['archive'] };
         break;
       case 'trash':
-        updateQuery = { folder: 'trash', trashedAt: new Date() };
+        updateQuery = { folder: 'trash', folders: ['trash'], trashedAt: new Date() };
         break;
       case 'spam':
-        updateQuery = { folder: 'spam' };
+        updateQuery = { folder: 'spam', folders: ['spam'] };
         break;
       case 'inbox':
-        updateQuery = { folder: 'inbox', trashedAt: null };
+        updateQuery = { folder: 'inbox', folders: ['inbox'], trashedAt: null };
         break;
       case 'markRead':
       case 'markUnread':

@@ -120,6 +120,7 @@ export const sendEmail = async ({
       lastMessageAt: new Date(),
       firstMessageAt: new Date(),
       folder: 'sent',
+      folders: ['sent'],
       category: 'primary',
     });
   } else {
@@ -127,6 +128,11 @@ export const sendEmail = async ({
     thread.messageCount += 1;
     thread.lastMessageAt = new Date();
     thread.snippet = (bodyText || '').substring(0, 200);
+
+    if (!thread.folders) thread.folders = [thread.folder || 'inbox'];
+    if (!thread.folders.includes('sent')) {
+      thread.folders.push('sent');
+    }
 
     // Add new participants
     const existingEmails = new Set(thread.participants.map(p => p.email));

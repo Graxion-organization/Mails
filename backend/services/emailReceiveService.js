@@ -134,6 +134,7 @@ export const processInboundEmail = async (payload) => {
         lastMessageAt: new Date(),
         firstMessageAt: new Date(),
         folder: spamResult.isSpam ? 'spam' : 'inbox',
+        folders: [spamResult.isSpam ? 'spam' : 'inbox'],
         category: categorizeEmail(from.email, subject, text),
         spamScore: spamResult.score,
         isSpam: spamResult.isSpam,
@@ -145,6 +146,11 @@ export const processInboundEmail = async (payload) => {
       thread.snippet = (text || '').substring(0, 200);
       if (!spamResult.isSpam && (thread.folder === 'archive' || thread.folder === 'sent' || thread.folder === 'trash')) {
         thread.folder = 'inbox'; // Move back to inbox on new reply
+      }
+      
+      if (!thread.folders) thread.folders = [thread.folder || 'inbox'];
+      if (!spamResult.isSpam && !thread.folders.includes('inbox')) {
+        thread.folders.push('inbox');
       }
       
       // Add new participants
