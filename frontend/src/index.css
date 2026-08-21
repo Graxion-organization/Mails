@@ -300,9 +300,26 @@ button {
   height: auto;
   border-radius: 8px;
 }
+.thread-message-body {
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 24px;
+  background-color: #ffffff;
+  color: #1f2937;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+}
+
+.thread-message-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
 
 .thread-message-body a {
-  color: var(--primary);
+  color: #2563eb;
   text-decoration: underline;
 }
 
@@ -355,35 +372,40 @@ button {
     border-radius: 0;
   }
 
-  /* Inbox */
+  /* Inbox Mobile */
   .inbox-thread-row {
     padding: 16px;
-    flex-wrap: wrap;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     position: relative;
-    border-radius: 0;
-    margin-bottom: 4px;
+    margin: 8px 12px;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
   
   .inbox-thread-row:hover {
-    transform: none;
-    box-shadow: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   }
   
   .inbox-thread-participants {
-    width: 100%;
-    margin-bottom: 6px;
-    font-size: 16px;
+    width: calc(100% - 100px);
+    margin-bottom: 4px;
+    font-size: 15px;
     font-weight: 600;
+    color: var(--text-main);
   }
   
   .inbox-thread-subject {
     width: 100%;
-    margin-bottom: 4px;
     color: var(--text-muted);
     font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .inbox-thread-date {
@@ -392,6 +414,7 @@ button {
     right: 16px;
     width: auto;
     font-weight: 500;
+    font-size: 12px;
   }
   
   .inbox-row-actions {

@@ -74,14 +74,27 @@ export default function Settings() {
       setLoading(true);
       const res = await api.post(`/orgs/${activeOrg._id}/domains`, { domain: newDomain });
       if (res.data.success) {
-        toast.success('Domain added successfully');
+        toast.success('Domain added successfully. Please verify DNS records.');
         setNewDomain('');
-        // Automatically verify for dev
-        await api.post(`/orgs/${activeOrg._id}/domains/${res.data.data.domain._id}/verify`);
         loadDomains();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to add domain');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyDomain = async (domainId) => {
+    try {
+      setLoading(true);
+      const res = await api.post(`/orgs/${activeOrg._id}/domains/${domainId}/verify`);
+      if (res.data.success) {
+        toast.success('Domain verified successfully!');
+        loadDomains();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Domain verification failed.');
     } finally {
       setLoading(false);
     }
@@ -226,17 +239,50 @@ export default function Settings() {
               <div className="settings-card">
                 <div className="list-container">
                   {domains.map(d => (
-                    <div key={d._id} className="list-item">
-                      <div className="item-info">
-                        <strong>{d.domain}</strong>
-                        <span className={`status-badge ${d.status === 'verified' ? 'success' : 'pending'}`}>
-                          {d.status === 'verified' ? <CheckCircle2 size={12} /> : null}
-                          {d.status}
-                        </span>
+                    <div key={d._id} className="list-item" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <div className="item-info" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <strong style={{ fontSize: '15px' }}>{d.domain}</strong>
+                          <span className={`status-badge ${d.status === 'verified' ? 'success' : 'pending'}`} style={{ marginLeft: '12px' }}>
+                            {d.status === 'verified' ? <CheckCircle2 size={12} /> : null}
+                            {d.status.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="item-actions">
+                          {d.status !== 'verified' && (
+                            <button className="btn-secondary" onClick={() => handleVerifyDomain(d._id)} disabled={loading}>
+                              Verify
+                            </button>
+                          )}
+                          <button className="btn-icon"><Trash2 size={16} /></button>
+                        </div>
                       </div>
-                      <div className="item-actions">
-                        <button className="btn-icon"><Trash2 size={16} /></button>
-                      </div>
+                      
+                      {d.status !== 'verified' && (
+                        <div style={{ marginTop: '16px', width: '100%', backgroundColor: 'rgba(24, 24, 27, 0.6)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px' }}>
+                          <p style={{ marginBottom: '12px', color: 'var(--text-main)', fontWeight: 500 }}>Please add the following DNS records to your domain provider to verify and use this domain:</p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div>
+                              <span style={{ color: 'var(--text-muted)' }}>TXT Record (Ownership Verification):</span>
+                              <code style={{ display: 'block', padding: '8px', background: '#09090b', border: '1px solid #27272a', borderRadius: '6px', marginTop: '4px', wordBreak: 'break-all' }}>
+                                Name: _graxion.{d.domain} &nbsp;&nbsp;&nbsp; Value: {d.verification?.token}
+                              </code>
+                            </div>
+                            <div>
+                              <span style={{ color: 'var(--text-muted)' }}>MX Record (Receive Email):</span>
+                              <code style={{ display: 'block', padding: '8px', background: '#09090b', border: '1px solid #27272a', borderRadius: '6px', marginTop: '4px', wordBreak: 'break-all' }}>
+                                Name: {d.domain} &nbsp;&nbsp;&nbsp; Value: inbound.resend.com &nbsp;&nbsp;&nbsp; Priority: 10
+                              </code>
+                            </div>
+                            <div>
+                              <span style={{ color: 'var(--text-muted)' }}>TXT Record (SPF / Deliverability):</span>
+                              <code style={{ display: 'block', padding: '8px', background: '#09090b', border: '1px solid #27272a', borderRadius: '6px', marginTop: '4px', wordBreak: 'break-all' }}>
+                                Name: {d.domain} &nbsp;&nbsp;&nbsp; Value: v=spf1 include:resend.com ~all
+                              </code>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {domains.length === 0 && <div className="empty-state">No domains configured.</div>}
@@ -305,9 +351,12 @@ export default function Settings() {
                             onChange={e => setNewMailbox({...newMailbox, domainId: e.target.value})}
                           >
                             <option value="">Select Domain</option>
-                            {domains.map(d => (
+                            {domains.filter(d => d.status === 'verified').map(d => (
                               <option key={d._id} value={d._id}>{d.domain}</option>
                             ))}
+                            {domains.filter(d => d.status === 'verified').length === 0 && (
+                              <option value="" disabled>No verified domains available</option>
+                            )}
                           </select>
                         </div>
                       </div>
