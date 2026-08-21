@@ -27,9 +27,20 @@ export default function Sidebar({ isOpen, onClose }) {
           className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors text-left"
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         >
-          <div className="flex flex-col overflow-hidden">
-            <div className="text-[14px] font-semibold text-main truncate">{activeMailbox?.displayName || 'Select Mailbox'}</div>
-            <div className="text-[12px] text-secondary truncate">{activeMailbox?.address || '...'}</div>
+          <div className="flex items-center gap-3 overflow-hidden">
+            <img 
+              src={`https://unavatar.io/${activeMailbox?.address}?fallback=https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(activeMailbox?.displayName || activeMailbox?.address)}`}
+              alt={activeMailbox?.displayName || 'Mailbox'}
+              className="w-8 h-8 rounded-full object-cover shrink-0 bg-primary/20 border border-white/10"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(activeMailbox?.displayName || activeMailbox?.address)}&backgroundColor=8b5cf6&textColor=ffffff`;
+              }}
+            />
+            <div className="flex flex-col overflow-hidden">
+              <div className="text-[14px] font-semibold text-main truncate">{activeMailbox?.displayName || 'Select Mailbox'}</div>
+              <div className="text-[12px] text-secondary truncate">{activeMailbox?.address || '...'}</div>
+            </div>
           </div>
           <ChevronDown size={16} className="text-secondary shrink-0 ml-2" />
         </button>
@@ -45,9 +56,20 @@ export default function Sidebar({ isOpen, onClose }) {
                   setIsDropdownOpen(false);
                 }}
               >
-                <div className="flex flex-col overflow-hidden">
-                  <div className="text-[13px] font-medium text-main truncate">{mb.displayName}</div>
-                  <div className="text-[12px] text-secondary truncate">{mb.address}</div>
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <img 
+                    src={`https://unavatar.io/${mb.address}?fallback=https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(mb.displayName || mb.address)}`}
+                    alt={mb.displayName || 'Mailbox'}
+                    className="w-7 h-7 rounded-full object-cover shrink-0 bg-primary/10 border border-white/5"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(mb.displayName || mb.address)}&backgroundColor=8b5cf6&textColor=ffffff`;
+                    }}
+                  />
+                  <div className="flex flex-col overflow-hidden">
+                    <div className="text-[13px] font-medium text-main truncate">{mb.displayName}</div>
+                    <div className="text-[12px] text-secondary truncate">{mb.address}</div>
+                  </div>
                 </div>
                 {activeMailbox?._id === mb._id && <Check size={16} className="text-primary shrink-0 ml-2" />}
               </button>

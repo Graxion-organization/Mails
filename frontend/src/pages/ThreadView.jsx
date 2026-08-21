@@ -279,9 +279,15 @@ export default function ThreadView() {
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between p-6 border-b border-white/5 gap-4">
                   
                   <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-full bg-[#8b5cf6] text-white flex items-center justify-center text-[20px] font-semibold shrink-0">
-                      {msg.from.name ? msg.from.name[0].toUpperCase() : msg.from.email[0].toUpperCase()}
-                    </div>
+                    <img 
+                      src={`https://unavatar.io/${msg.from.email}?fallback=https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(msg.from.name || msg.from.email)}`}
+                      alt={msg.from.name || msg.from.email}
+                      className="w-11 h-11 rounded-full object-cover shrink-0 bg-[#8b5cf6]/20 border border-white/10"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(msg.from.name || msg.from.email)}&backgroundColor=8b5cf6&textColor=ffffff`;
+                      }}
+                    />
                     <div className="flex flex-col gap-1">
                       <div className="text-[15px] font-semibold text-main flex items-center">
                         {msg.from.name || msg.from.email}
