@@ -37,7 +37,7 @@ export const addDomain = async (req, res) => {
     if (normalized.includes('graxion.in') || normalized.includes('graxion.com') || normalized.includes('graxion.ai')) {
       const parentRecord = await Domain.findOne({ domain: 'graxion.in' });
       if (parentRecord && parentRecord.organization.toString() !== req.params.orgId) {
-        return res.status(403).json({ success: false, message: 'This is a reserved Graxion system domain' });
+        return res.status(403).json({ success: false, message: 'SECURITY VIOLATION: Access denied. You are attempting to register a reserved Graxion official system domain. This action has been blocked and logged.' });
       }
     }
 
