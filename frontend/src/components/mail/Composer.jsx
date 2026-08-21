@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMail } from '../../context/MailContext';
 import { X, Minus, Maximize2, Paperclip, Send, Clock, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../utils/api';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 export default function Composer() {
   const { closeComposer, activeOrg, activeMailbox, composerInitialData } = useMail();
@@ -16,7 +16,47 @@ export default function Composer() {
   const [body, setBody] = useState(composerInitialData?.body || '');
   const [attachments, setAttachments] = useState([]);
   const [isSending, setIsSending] = useState(false);
+  const [draftId, setDraftId] = useState(null);
   const fileInputRef = useRef(null);
+  const draftTimer = useRef(null);
+
+  // Auto-draft logic
+  useEffect(() => {
+    const isEmpty = !to && !subject && (!body || body === '<p><br></p>' || body === '');
+    if (isEmpty || isSending) return;
+
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+
+    draftTimer.current = setTimeout(async () => {
+      try {
+        const payload = {
+          organizationId: activeOrg?._id,
+          mailboxId: activeMailbox?._id,
+          to: to.split(',').map(e => e.trim()).filter(Boolean),
+          subject,
+          bodyHtml: body,
+          bodyText: body.replace(/<[^>]+>/g, ''),
+        };
+
+        if (composerInitialData?.type === 'reply') {
+          payload.inReplyTo = composerInitialData.messageId;
+        }
+
+        if (draftId) {
+          await api.put(`/mail/drafts/${draftId}`, payload);
+        } else {
+          const res = await api.post('/mail/drafts', payload);
+          if (res.data?.data?._id) {
+            setDraftId(res.data.data._id);
+          }
+        }
+      } catch (err) {
+        console.error("Auto draft save error", err);
+      }
+    }, 2500);
+
+    return () => clearTimeout(draftTimer.current);
+  }, [to, subject, body, activeOrg, activeMailbox, composerInitialData, draftId, isSending]);
 
   const handleFileChange = (e) => {
     if (e.target.files) {
