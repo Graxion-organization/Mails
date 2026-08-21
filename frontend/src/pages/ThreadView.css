@@ -400,22 +400,30 @@
   }
 
   .thread-message-header {
-    flex-direction: column;
-    padding: 16px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+  
+  .thread-sender-avatar {
+    margin-right: 12px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
   }
   
   .thread-message-meta {
-    align-items: flex-start;
-    margin-top: 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
+    margin-top: 16px;
   }
 
   .thread-message-actions {
-    width: 100%;
-    justify-content: space-between;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255,255,255,0.05);
+    width: auto;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
   }
 
   .thread-notes-container, .thread-note-composer {
