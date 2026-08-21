@@ -160,7 +160,18 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
               <div 
                 key={thread._id} 
                 className={`flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3.5 sm:py-4 rounded-[16px] cursor-pointer transition-all border border-transparent hover:border-white/5 ${isUnread ? 'bg-white/[0.03] shadow-sm' : 'hover:bg-white/[0.02]'}`}
-                onClick={() => navigate(`/thread/${thread._id}`)}
+                onClick={() => {
+                  if (folder === 'drafts') {
+                    openComposer({
+                      type: 'draft',
+                      to: thread.participants?.map(p => p.email).join(', ') || '',
+                      subject: thread.subject || '',
+                      body: thread.snippet || '' // Assuming full body isn't in snippet but best we have from thread list
+                    });
+                  } else {
+                    navigate(`/thread/${thread._id}`);
+                  }
+                }}
               >
                 <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
                   <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-secondary transition-colors group hidden sm:flex">

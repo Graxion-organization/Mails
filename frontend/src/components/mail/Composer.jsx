@@ -17,8 +17,25 @@ export default function Composer() {
   const [attachments, setAttachments] = useState([]);
   const [isSending, setIsSending] = useState(false);
   const [draftId, setDraftId] = useState(null);
+  const [scheduledAt, setScheduledAt] = useState('');
+  const [showScheduleInput, setShowScheduleInput] = useState(false);
   const fileInputRef = useRef(null);
   const draftTimer = useRef(null);
+  
+  // Load local draft on mount if not replying
+  useEffect(() => {
+    if (!composerInitialData?.type) {
+      const localDraft = localStorage.getItem('graxion_offline_draft');
+      if (localDraft) {
+        try {
+          const parsed = JSON.parse(localDraft);
+          if (parsed.to) setTo(parsed.to);
+          if (parsed.subject) setSubject(parsed.subject);
+          if (parsed.body) setBody(parsed.body);
+        } catch (e) {}
+      }
+    }
+  }, [composerInitialData]);
 
   // Auto-draft logic
   useEffect(() => {
@@ -28,20 +45,23 @@ export default function Composer() {
     if (draftTimer.current) clearTimeout(draftTimer.current);
 
     draftTimer.current = setTimeout(async () => {
+      const payload = {
+        organizationId: activeOrg?._id,
+        mailboxId: activeMailbox?._id,
+        to: to.split(',').map(e => e.trim()).filter(Boolean),
+        subject,
+        bodyHtml: body,
+        bodyText: body.replace(/<[^>]+>/g, ''),
+      };
+
+      if (composerInitialData?.type === 'reply') {
+        payload.inReplyTo = composerInitialData.messageId;
+      }
+      
+      // Always save to localStorage as backup
+      localStorage.setItem('graxion_offline_draft', JSON.stringify({ to, subject, body }));
+
       try {
-        const payload = {
-          organizationId: activeOrg?._id,
-          mailboxId: activeMailbox?._id,
-          to: to.split(',').map(e => e.trim()).filter(Boolean),
-          subject,
-          bodyHtml: body,
-          bodyText: body.replace(/<[^>]+>/g, ''),
-        };
-
-        if (composerInitialData?.type === 'reply') {
-          payload.inReplyTo = composerInitialData.messageId;
-        }
-
         if (draftId) {
           await api.put(`/mail/drafts/${draftId}`, payload);
         } else {
@@ -51,16 +71,41 @@ export default function Composer() {
           }
         }
       } catch (err) {
-        console.error("Auto draft save error", err);
+        console.error("Auto draft save error to cloud, saved locally", err);
       }
     }, 2500);
 
     return () => clearTimeout(draftTimer.current);
   }, [to, subject, body, activeOrg, activeMailbox, composerInitialData, draftId, isSending]);
 
-  const handleFileChange = (e) => {
-    if (e.target.files) {
-      setAttachments([...attachments, ...Array.from(e.target.files)]);
+  const handleFileChange = async (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      const tempAttachments = newFiles.map(f => ({ name: f.name, uploading: true }));
+      setAttachments(prev => [...prev, ...tempAttachments]);
+      
+      for (let i = 0; i < newFiles.length; i++) {
+        const file = newFiles[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('orgId', activeOrg?._id);
+        
+        try {
+          const res = await api.post('/mail/attachments/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          
+          setAttachments(prev => {
+            const updated = [...prev];
+            const idx = updated.findIndex(a => a.name === file.name && a.uploading);
+            if (idx !== -1) updated[idx] = res.data.data;
+            return updated;
+          });
+        } catch (error) {
+          toast.error(`Failed to upload ${file.name}`);
+          setAttachments(prev => prev.filter(a => !(a.name === file.name && a.uploading)));
+        }
+      }
     }
   };
 
@@ -70,43 +115,45 @@ export default function Composer() {
 
   const handleSend = async () => {
     if (!to) return toast.error('Please specify a recipient');
+    if (attachments.some(a => a.uploading)) return toast.error('Please wait for attachments to finish uploading');
     
     setIsSending(true);
     try {
       const recipients = to.split(',').map(email => email.trim()).filter(Boolean);
-      const cleanBodyText = body.replace(/<[^>]+>/g, ''); // strip HTML for plain text fallback
+      const cleanBodyText = body.replace(/<[^>]+>/g, '');
       
-      const formData = new FormData();
-      formData.append('organizationId', activeOrg?._id);
-      formData.append('mailboxId', activeMailbox?._id);
-      
-      recipients.forEach(email => formData.append('to[]', email));
-      
-      if (composerInitialData?.type === 'reply') {
-        formData.append('messageId', composerInitialData.messageId);
-        formData.append('replyAll', false);
-      } else {
-        formData.append('subject', subject);
+      const payload = {
+        organizationId: activeOrg?._id,
+        mailboxId: activeMailbox?._id,
+        to: recipients,
+        bodyText: cleanBodyText,
+        bodyHtml: body,
+        attachments: attachments,
+      };
+
+      if (scheduledAt) {
+        payload.scheduledAt = scheduledAt;
       }
-      
-      formData.append('bodyText', cleanBodyText);
-      formData.append('bodyHtml', body);
-      
-      attachments.forEach(file => {
-        formData.append('attachments', file);
-      });
 
       if (composerInitialData?.type === 'reply') {
-        await api.post('/mail/reply', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        payload.messageId = composerInitialData.messageId;
+        payload.replyAll = false;
+        if (scheduledAt) {
+          await api.post('/mail/schedule', payload);
+        } else {
+          await api.post('/mail/reply', payload);
+        }
       } else {
-        await api.post('/mail/send', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        payload.subject = subject;
+        if (scheduledAt) {
+          await api.post('/mail/schedule', payload);
+        } else {
+          await api.post('/mail/send', payload);
+        }
       }
       
-      toast.success('Email sent!');
+      localStorage.removeItem('graxion_offline_draft');
+      toast.success(scheduledAt ? 'Email scheduled!' : 'Email sent!');
       closeComposer();
     } catch (error) {
       console.error('Send error:', error);
@@ -136,12 +183,16 @@ export default function Composer() {
   }
 
   return (
-    <div className={`fixed z-[100] bg-bg border border-white/10 flex flex-col shadow-2xl animate-slide-up ${isFullScreen ? 'inset-4 rounded-xl' : 'bottom-6 right-6 lg:right-10 w-[600px] h-[550px] rounded-xl'}`}>
-      <div className="flex items-center justify-between px-4 py-3 bg-surface border-b border-white/5 rounded-t-xl shrink-0">
+    <div className={`fixed z-[100] bg-bg border border-white/10 flex flex-col shadow-2xl animate-slide-up 
+      ${isFullScreen 
+        ? 'inset-0 sm:inset-4 sm:rounded-xl' 
+        : 'bottom-0 right-0 w-full h-[100dvh] sm:bottom-6 sm:right-6 lg:right-10 sm:w-[600px] sm:h-[550px] sm:rounded-xl rounded-t-xl'
+      }`}>
+      <div className="flex items-center justify-between px-4 py-3 bg-surface border-b border-white/5 sm:rounded-t-xl shrink-0">
         <div className="text-[14px] font-medium text-main">New Message</div>
         <div className="flex items-center gap-1">
-          <button onClick={() => setIsMinimized(true)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"><Minus size={16} /></button>
-          <button onClick={() => setIsFullScreen(!isFullScreen)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"><Maximize2 size={16} /></button>
+          <button onClick={() => setIsMinimized(true)} className="hidden sm:flex w-8 h-8 items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"><Minus size={16} /></button>
+          <button onClick={() => setIsFullScreen(!isFullScreen)} className="hidden sm:flex w-8 h-8 items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"><Maximize2 size={16} /></button>
           <button onClick={closeComposer} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"><X size={16} /></button>
         </div>
       </div>
@@ -202,17 +253,49 @@ export default function Composer() {
       
       <div className="flex items-center justify-between px-4 py-3 bg-surface border-t border-white/5 rounded-b-xl shrink-0">
         <div className="flex items-center gap-4">
-          <div className="flex items-center bg-primary rounded-lg">
+          <div className="flex items-center bg-primary rounded-lg relative">
             <button 
               className="px-5 py-2 text-[14px] font-medium text-white hover:bg-white/10 transition-colors rounded-l-lg border-r border-white/20 disabled:opacity-50" 
               onClick={handleSend}
               disabled={isSending}
             >
-              {isSending ? 'Sending...' : 'Send'}
+              {isSending ? 'Sending...' : (scheduledAt ? 'Schedule' : 'Send')}
             </button>
-            <button className="px-3 py-2 text-white hover:bg-white/10 transition-colors rounded-r-lg">
+            <button 
+              className="px-3 py-2 text-white hover:bg-white/10 transition-colors rounded-r-lg relative"
+              onClick={() => setShowScheduleInput(!showScheduleInput)}
+            >
               <Clock size={16} />
             </button>
+            
+            {showScheduleInput && (
+              <div className="absolute bottom-full mb-2 left-0 bg-surface border border-white/10 rounded-xl p-3 shadow-2xl flex flex-col gap-2 z-50 min-w-[200px]">
+                <span className="text-[12px] font-medium text-secondary">Schedule Send</span>
+                <input 
+                  type="datetime-local" 
+                  className="bg-bg border border-white/10 rounded-lg p-2 text-[13px] text-main outline-none focus:border-primary"
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                />
+                <div className="flex gap-2">
+                  <button 
+                    className="flex-1 text-[12px] bg-primary text-white py-1.5 rounded-lg"
+                    onClick={() => setShowScheduleInput(false)}
+                  >
+                    Confirm
+                  </button>
+                  {scheduledAt && (
+                    <button 
+                      className="flex-1 text-[12px] bg-white/10 text-white py-1.5 rounded-lg hover:bg-danger/20 hover:text-danger"
+                      onClick={() => { setScheduledAt(''); setShowScheduleInput(false); }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple />
           <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors" onClick={() => fileInputRef.current?.click()}>

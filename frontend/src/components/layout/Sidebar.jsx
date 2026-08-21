@@ -20,7 +20,7 @@ export default function Sidebar({ isOpen, onClose }) {
   ];
 
   return (
-    <div className={`w-[260px] bg-sidebar border-r border-white/5 flex flex-col transition-transform duration-300 z-50 shrink-0 ${isOpen ? 'translate-x-0 fixed inset-y-0 left-0' : '-translate-x-full fixed inset-y-0 left-0 lg:translate-x-0 lg:static'}`}>
+    <div className={`w-[260px] bg-sidebar border-r border-white/5 flex flex-col transition-transform duration-300 z-[100] shrink-0 ${isOpen ? 'translate-x-0 fixed inset-y-0 left-0' : '-translate-x-full fixed inset-y-0 left-0 lg:translate-x-0 lg:static'}`}>
       {/* Mailbox Selector */}
       <div className="p-4 border-b border-white/5 relative">
         <button 
