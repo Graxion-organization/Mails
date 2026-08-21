@@ -143,7 +143,7 @@ export const processInboundEmail = async (payload) => {
       thread.messageCount += 1;
       thread.lastMessageAt = new Date();
       thread.snippet = (text || '').substring(0, 200);
-      if (!spamResult.isSpam && thread.folder === 'archive') {
+      if (!spamResult.isSpam && (thread.folder === 'archive' || thread.folder === 'sent' || thread.folder === 'trash')) {
         thread.folder = 'inbox'; // Move back to inbox on new reply
       }
       
