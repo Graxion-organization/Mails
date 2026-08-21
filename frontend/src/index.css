@@ -419,22 +419,7 @@ button {
     display: none;
   }
 
-  /* Thread View */
-  .thread-view-container {
-    padding: 16px;
-  }
 
-  .thread-message-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .thread-message-actions {
-    width: 100%;
-    display: flex;
-    justify-content: flex-end;
-  }
 }
 
 /* ── New Layout Components CSS ── */

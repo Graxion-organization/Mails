@@ -13,6 +13,11 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Pull to refresh state
+  const [startY, setStartY] = useState(0);
+  const [pullDist, setPullDist] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (activeOrg && activeMailbox) {
@@ -63,6 +68,33 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
     );
   }
 
+  const handleTouchStart = (e) => {
+    if (e.currentTarget.scrollTop <= 0) {
+      setStartY(e.touches[0].clientY);
+    } else {
+      setStartY(0);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (startY === 0) return;
+    const y = e.touches[0].clientY;
+    const dist = y - startY;
+    if (dist > 0) {
+      setPullDist(Math.min(dist * 0.4, 80));
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullDist > 50) {
+      setRefreshing(true);
+      await fetchThreads();
+      setRefreshing(false);
+    }
+    setPullDist(0);
+    setStartY(0);
+  };
+
   return (
     <div className="inbox-container">
       <div className="inbox-toolbar">
@@ -88,7 +120,24 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
         </div>
       </div>
 
-      <div className="inbox-thread-list">
+      <div 
+        className="inbox-thread-list"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div style={{ 
+          height: `${pullDist}px`, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          overflow: 'hidden',
+          transition: refreshing ? 'height 0.2s' : 'none',
+          color: 'var(--text-muted)',
+          fontSize: '13px'
+        }}>
+           {refreshing ? 'Refreshing...' : 'Pull down to refresh'}
+        </div>
         {threads.length === 0 ? (
           <div className="inbox-empty-container">
             <div className="inbox-empty-icon">📬</div>
@@ -137,10 +186,10 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
                   )}
                   <span>
                     {mode === 'search' 
-                      ? (thread.from?.name || thread.from?.email)
+                      ? (thread.participants?.[0]?.name || thread.participants?.[0]?.email || 'Unknown')
                       : folder === 'sent' 
-                        ? `To: ${thread.to?.[0]?.name || thread.to?.[0]?.email}`
-                        : (thread.from?.name || thread.from?.email?.split('@')[0])
+                        ? `To: ${thread.participants?.[0]?.name || thread.participants?.[0]?.email || 'Unknown'}`
+                        : (thread.participants?.[0]?.name || thread.participants?.[0]?.email?.split('@')[0] || 'Unknown')
                     }
                   </span>
                   {thread.messageCount > 1 && <span className="inbox-count-badge">{thread.messageCount}</span>}
