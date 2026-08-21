@@ -22,32 +22,32 @@ export default function Sidebar({ isOpen, onClose }) {
   return (
     <div className={`mail-sidebar ${isOpen ? 'open' : ''}`}>
       {/* Mailbox Selector */}
-      <div style={styles.selectorContainer}>
+      <div className="sidebar-selector-container">
         <button 
-          style={styles.selectorBtn} 
+          className="sidebar-selector-btn"
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         >
-          <div style={styles.selectorInfo}>
-            <div style={styles.selectorName}>{activeMailbox?.displayName || 'Select Mailbox'}</div>
-            <div style={styles.selectorAddress}>{activeMailbox?.address || '...'}</div>
+          <div className="sidebar-selector-info">
+            <div className="sidebar-selector-name">{activeMailbox?.displayName || 'Select Mailbox'}</div>
+            <div className="sidebar-selector-address">{activeMailbox?.address || '...'}</div>
           </div>
           <ChevronDown size={16} color="var(--text-muted)" />
         </button>
         
         {isDropdownOpen && (
-          <div style={styles.dropdown}>
+          <div className="sidebar-dropdown">
             {mailboxes.map(mb => (
               <button 
                 key={mb._id} 
-                style={styles.dropdownItem}
+                className="sidebar-dropdown-item"
                 onClick={() => {
                   setActiveMailbox(mb);
                   setIsDropdownOpen(false);
                 }}
               >
-                <div style={styles.dropdownItemInfo}>
-                  <div style={styles.dropdownItemName}>{mb.displayName}</div>
-                  <div style={styles.dropdownItemAddress}>{mb.address}</div>
+                <div className="sidebar-dropdown-info">
+                  <div className="sidebar-dropdown-name">{mb.displayName}</div>
+                  <div className="sidebar-dropdown-address">{mb.address}</div>
                 </div>
                 {activeMailbox?._id === mb._id && <Check size={16} color="var(--primary)" />}
               </button>
@@ -57,48 +57,43 @@ export default function Sidebar({ isOpen, onClose }) {
       </div>
 
       {/* Compose Button */}
-      <div style={styles.composeContainer}>
-        <button className="btn btn-primary" style={styles.composeBtn} onClick={() => openComposer()}>
+      <div className="sidebar-compose-container">
+        <button className="btn btn-primary sidebar-compose-btn" onClick={() => openComposer()}>
           <PenBox size={18} />
           Compose
         </button>
       </div>
 
       {/* Navigation */}
-      <nav style={styles.nav}>
+      <nav className="sidebar-nav">
         {navItems.map(item => (
           <NavLink 
             key={item.id} 
             to={item.path}
             onClick={onClose}
-            style={({ isActive }) => ({
-              ...styles.navLink,
-              ...(isActive ? styles.navLinkActive : {})
-            })}
+            className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}
           >
-            <div style={styles.navLinkInner}>
+            <div className="sidebar-nav-inner">
               <item.icon size={18} />
               <span>{item.label}</span>
             </div>
             {item.count > 0 && (
-              <span style={styles.badge}>{item.count}</span>
+              <span className="sidebar-badge">{item.count}</span>
             )}
           </NavLink>
         ))}
       </nav>
       
-      <div style={{ flex: 1 }}></div>
+      <div className="sidebar-spacer"></div>
 
       {/* Settings */}
-      <nav style={styles.nav}>
+      <nav className="sidebar-nav">
         <NavLink 
           to="/settings"
-          style={({ isActive }) => ({
-            ...styles.navLink,
-            ...(isActive ? styles.navLinkActive : {})
-          })}
+          onClick={onClose}
+          className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}
         >
-          <div style={styles.navLinkInner}>
+          <div className="sidebar-nav-inner">
             <Settings size={18} />
             <span>Settings</span>
           </div>
@@ -107,122 +102,3 @@ export default function Sidebar({ isOpen, onClose }) {
     </div>
   );
 }
-
-const styles = {
-  sidebar: {
-    width: '260px',
-    backgroundColor: 'var(--bg-sidebar)',
-    borderRight: '1px solid var(--border-color)',
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '16px 0',
-  },
-  selectorContainer: {
-    padding: '0 16px',
-    marginBottom: '16px',
-    position: 'relative',
-  },
-  selectorBtn: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '12px',
-    backgroundColor: 'var(--bg-surface)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '10px',
-    textAlign: 'left',
-  },
-  selectorInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-  },
-  selectorName: {
-    fontWeight: '600',
-    fontSize: '14px',
-  },
-  selectorAddress: {
-    fontSize: '12px',
-    color: 'var(--text-muted)',
-  },
-  dropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: '16px',
-    right: '16px',
-    marginTop: '4px',
-    backgroundColor: 'var(--bg-surface)',
-    border: '1px solid var(--border-color)',
-    borderRadius: '8px',
-    padding: '4px',
-    zIndex: 10,
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
-  },
-  dropdownItem: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '8px 12px',
-    borderRadius: '6px',
-    textAlign: 'left',
-  },
-  dropdownItemInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  dropdownItemName: {
-    fontSize: '13px',
-    fontWeight: '500',
-  },
-  dropdownItemAddress: {
-    fontSize: '11px',
-    color: 'var(--text-muted)',
-  },
-  composeContainer: {
-    padding: '0 16px',
-    marginBottom: '24px',
-  },
-  composeBtn: {
-    width: '100%',
-    padding: '12px',
-    borderRadius: '10px',
-    fontWeight: '600',
-    fontSize: '15px',
-  },
-  nav: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    padding: '0 12px',
-  },
-  navLink: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '10px 12px',
-    borderRadius: '8px',
-    color: 'var(--text-muted)',
-    transition: 'all 0.2s',
-  },
-  navLinkActive: {
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
-    color: 'var(--primary)',
-    fontWeight: '500',
-  },
-  navLinkInner: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    fontSize: '14px',
-  },
-  badge: {
-    backgroundColor: 'var(--primary)',
-    color: 'white',
-    fontSize: '12px',
-    padding: '2px 8px',
-    borderRadius: '12px',
-    fontWeight: '600',
-  }
-};
