@@ -100,6 +100,22 @@ export default function Settings() {
     }
   };
 
+  const handleRemoveDomain = async (domainId) => {
+    if (!window.confirm('Are you sure you want to remove this domain?')) return;
+    try {
+      setLoading(true);
+      const res = await api.delete(`/orgs/${activeOrg._id}/domains/${domainId}`);
+      if (res.data.success) {
+        toast.success('Domain removed successfully');
+        loadDomains();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to remove domain');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Mailboxes Tab
   const [showMailboxModal, setShowMailboxModal] = useState(false);
   const [newMailbox, setNewMailbox] = useState({ localPart: '', domainId: '', displayName: '' });
@@ -118,6 +134,27 @@ export default function Settings() {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create mailbox');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [editMailbox, setEditMailbox] = useState(null);
+
+  const handleUpdateMailbox = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const res = await api.put(`/orgs/${activeOrg._id}/mailboxes/${editMailbox._id}`, {
+        displayName: editMailbox.displayName,
+      });
+      if (res.data.success) {
+        toast.success('Mailbox updated successfully');
+        setEditMailbox(null);
+        fetchMailboxes(activeOrg._id);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update mailbox');
     } finally {
       setLoading(false);
     }
@@ -254,7 +291,7 @@ export default function Settings() {
                               Verify
                             </button>
                           )}
-                          <button className="btn-icon"><Trash2 size={16} /></button>
+                          <button className="btn-icon" onClick={() => handleRemoveDomain(d._id)} title="Remove Domain"><Trash2 size={16} /></button>
                         </div>
                       </div>
                       
@@ -323,7 +360,7 @@ export default function Settings() {
                       </div>
                       <div className="item-actions">
                         <span className="pill">Shared</span>
-                        <button className="btn-icon"><SettingsIcon size={16} /></button>
+                        <button className="btn-icon" onClick={() => setEditMailbox(m)} title="Edit Mailbox"><SettingsIcon size={16} /></button>
                       </div>
                     </div>
                   ))}
@@ -372,6 +409,38 @@ export default function Settings() {
                       <div className="modal-actions">
                         <button type="button" className="btn-ghost" onClick={() => setShowMailboxModal(false)}>Cancel</button>
                         <button type="submit" className="btn-primary" disabled={loading}>Create</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {editMailbox && (
+                <div className="modal-overlay">
+                  <div className="modal-content">
+                    <h3>Edit Mailbox</h3>
+                    <form onSubmit={handleUpdateMailbox}>
+                      <div className="form-group">
+                        <label>Address</label>
+                        <input 
+                          type="text" 
+                          value={editMailbox.address}
+                          disabled
+                          style={{ opacity: 0.5 }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Display Name</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g. Support Team"
+                          value={editMailbox.displayName || ''}
+                          onChange={e => setEditMailbox({...editMailbox, displayName: e.target.value})}
+                        />
+                      </div>
+                      <div className="modal-actions">
+                        <button type="button" className="btn-ghost" onClick={() => setEditMailbox(null)}>Cancel</button>
+                        <button type="submit" className="btn-primary" disabled={loading}>Save Changes</button>
                       </div>
                     </form>
                   </div>
