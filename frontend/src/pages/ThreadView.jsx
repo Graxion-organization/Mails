@@ -26,6 +26,7 @@ export default function ThreadView() {
 
   // Inline Composer State
   const [replyText, setReplyText] = useState('');
+  const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -136,8 +137,10 @@ export default function ThreadView() {
 
   const handleTextareaInput = (e) => {
     setReplyText(e.target.value);
-    e.target.style.height = 'auto';
-    e.target.style.height = Math.min(Math.max(e.target.scrollHeight, 40), 240) + 'px';
+    if (isComposerExpanded) {
+      e.target.style.height = 'auto';
+      e.target.style.height = Math.min(Math.max(e.target.scrollHeight, 120), 240) + 'px';
+    }
   };
 
   if (loading) {
@@ -351,57 +354,84 @@ export default function ThreadView() {
       </div>
 
       {/* Sticky Reply Composer (Bottom) */}
-      <div className="sticky bottom-0 z-20 bg-surface border-t border-border shrink-0 px-4 md:px-12 py-4">
-        <div className="bg-card border border-border rounded-xl flex flex-col overflow-hidden shadow-2xl focus-within:border-white/20 transition-colors">
+      <div className="sticky bottom-0 z-20 bg-surface border-t border-border shrink-0 px-2 sm:px-4 md:px-6 lg:px-10 py-3 transition-all duration-200">
+        <div 
+          className="bg-card border border-border rounded-xl flex flex-col overflow-hidden shadow-2xl focus-within:border-white/20 transition-colors"
+          onClick={() => {
+            if (!isComposerExpanded) {
+              setIsComposerExpanded(true);
+              setTimeout(() => {
+                if (textareaRef.current) {
+                   textareaRef.current.style.height = '120px';
+                   textareaRef.current.focus();
+                }
+              }, 10);
+            }
+          }}
+        >
           
-          <div className="flex gap-3 p-4">
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-[14px] font-semibold shrink-0">
+          <div className={`flex gap-3 px-4 ${isComposerExpanded ? 'pt-4 pb-2' : 'py-2.5 items-center'}`}>
+            <div className={`${isComposerExpanded ? 'w-8 h-8' : 'w-7 h-7'} rounded-full bg-primary text-white flex items-center justify-center text-[13px] font-semibold shrink-0 transition-all`}>
               Y
             </div>
             <textarea 
               ref={textareaRef}
-              className="w-full bg-transparent border-none text-main text-[14px] outline-none resize-none min-h-[40px] max-h-[240px] pt-1.5"
+              className={`w-full bg-transparent border-none text-main text-[14px] outline-none resize-none transition-all duration-200 ${isComposerExpanded ? 'min-h-[120px] max-h-[240px] pt-1.5' : 'h-[24px] pt-0.5 overflow-hidden'}`}
               placeholder="Reply..."
               value={replyText}
               onChange={handleTextareaInput}
+              onFocus={() => {
+                if (!isComposerExpanded) {
+                  setIsComposerExpanded(true);
+                  setTimeout(() => {
+                    if (textareaRef.current) textareaRef.current.style.height = '120px';
+                  }, 10);
+                }
+              }}
             />
           </div>
           
-          <div className="flex flex-wrap items-center justify-between p-3 bg-surface border-t border-white/5">
-            <div className="flex items-center gap-2">
-              <button 
-                className="flex items-center bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-md text-[13px] font-medium transition-colors cursor-pointer disabled:opacity-50"
-                onClick={() => {
-                  toast.success("Reply sent!");
+          {isComposerExpanded && (
+            <div className="flex flex-wrap items-center justify-between p-3 bg-surface border-t border-white/5 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center gap-2">
+                <button 
+                  className="flex items-center bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-md text-[13px] font-medium transition-colors cursor-pointer disabled:opacity-50"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toast.success("Reply sent!");
+                    setReplyText("");
+                    setIsComposerExpanded(false);
+                    textareaRef.current.style.height = '24px';
+                  }}
+                  disabled={!replyText.trim()}
+                >
+                  <Reply size={14} className="mr-2"/> Send <ChevronDown size={14} className="ml-2"/>
+                </button>
+                
+                <div className="w-px h-6 bg-border mx-2"></div>
+                
+                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors">
+                   <Paperclip size={18}/>
+                </button>
+                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors">
+                   <Smile size={18}/>
+                </button>
+                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors">
+                   <Type size={18}/>
+                </button>
+              </div>
+              <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-danger hover:bg-danger/10 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
                   setReplyText("");
-                  textareaRef.current.style.height = '40px';
+                  setIsComposerExpanded(false);
+                  textareaRef.current.style.height = '24px';
                 }}
-                disabled={!replyText.trim()}
               >
-                <Reply size={14} className="mr-2"/> Send <ChevronDown size={14} className="ml-2"/>
-              </button>
-              
-              <div className="w-px h-6 bg-border mx-2"></div>
-              
-              <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors">
-                 <Paperclip size={18}/>
-              </button>
-              <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors">
-                 <Smile size={18}/>
-              </button>
-              <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors">
-                 <Type size={18}/>
+                <Trash2 size={18}/>
               </button>
             </div>
-            <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-danger hover:bg-danger/10 transition-colors"
-              onClick={() => {
-                setReplyText("");
-                textareaRef.current.style.height = '40px';
-              }}
-            >
-              <Trash2 size={18}/>
-            </button>
-          </div>
+          )}
           
         </div>
       </div>
