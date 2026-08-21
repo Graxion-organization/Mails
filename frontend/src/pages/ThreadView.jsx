@@ -298,8 +298,12 @@ export default function ThreadView() {
                     <button 
                       className="flex items-center justify-center w-8 h-8 rounded-md text-secondary hover:text-main hover:bg-white/10 transition-colors"
                       onClick={() => {
-                        textareaRef.current?.focus();
-                        setReplyText(`\n\n\n--- On ${format(new Date(msg.createdAt), 'PPpp')}, ${msg.from.name || msg.from.email} wrote ---\n${msg.bodyText || ''}`);
+                        openComposer({
+                          type: 'reply',
+                          messageId: msg._id,
+                          to: msg.direction === 'outbound' ? (msg.to?.[0]?.email || '') : (msg.from?.email || ''),
+                          subject: thread.subject || ''
+                        });
                       }}
                       title="Reply"
                     >
@@ -380,11 +384,16 @@ export default function ThreadView() {
       <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4">
         <button 
           onClick={() => {
+            const lastMsg = data.messages[data.messages.length - 1];
+            const replyTo = lastMsg.direction === 'outbound' 
+              ? (lastMsg.to?.[0]?.email || '') 
+              : (lastMsg.from?.email || '');
+              
             openComposer({
               type: 'reply',
-              messageId: data.messages[data.messages.length - 1]._id, // Reply to the last message
-              to: data.participants?.[0]?.email || '',
-              subject: data.subject
+              messageId: lastMsg._id, // Reply to the last message
+              to: replyTo,
+              subject: data.subject || ''
             });
           }}
           className="flex items-center gap-2 bg-surface hover:bg-white/5 border border-white/10 text-main px-6 py-3 rounded-full font-medium transition-colors shadow-sm mx-auto w-fit"
