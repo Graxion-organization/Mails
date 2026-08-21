@@ -299,7 +299,7 @@ export default function ThreadView() {
                 
                 <div 
                   className="thread-message-body"
-                  dangerouslySetInnerHTML={{ __html: msg.bodyHtml || `<p>${msg.bodyText}</p>` }}
+                  dangerouslySetInnerHTML={{ __html: msg.bodyHtml || `<div style="white-space: pre-wrap; font-family: inherit;">${msg.bodyText || ''}</div>` }}
                 />
               </div>
               
