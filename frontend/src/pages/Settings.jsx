@@ -160,6 +160,22 @@ export default function Settings() {
     }
   };
 
+  const handleDeleteMailbox = async (mailboxId) => {
+    if (!window.confirm('Are you sure you want to deactivate this mailbox?')) return;
+    try {
+      setLoading(true);
+      const res = await api.delete(`/orgs/${activeOrg._id}/mailboxes/${mailboxId}`);
+      if (res.data.success) {
+        toast.success('Mailbox deactivated');
+        fetchMailboxes(activeOrg._id);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete mailbox');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Members Tab
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
@@ -361,6 +377,7 @@ export default function Settings() {
                       <div className="item-actions">
                         <span className="pill">Shared</span>
                         <button className="btn-icon" onClick={() => setEditMailbox(m)} title="Edit Mailbox"><SettingsIcon size={16} /></button>
+                        <button className="btn-icon" onClick={() => handleDeleteMailbox(m._id)} title="Delete Mailbox"><Trash2 size={16} /></button>
                       </div>
                     </div>
                   ))}
