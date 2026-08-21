@@ -333,57 +333,57 @@ export default function Settings() {
                               </thead>
                               <tbody>
                                 <tr>
-                                  <td><span className="dns-type">TXT</span></td>
-                                  <td>
+                                  <td data-label="Type"><span className="dns-type">TXT</span></td>
+                                  <td data-label="Name / Host">
                                     <div className="dns-copyable">
                                       <span>_graxion.{d.domain}</span>
                                       <button onClick={() => handleCopy(`_graxion.${d.domain}`)} title="Copy"><Copy size={12}/></button>
                                     </div>
                                   </td>
-                                  <td>
+                                  <td data-label="Value">
                                     <div className="dns-copyable">
                                       <span className="truncate-value" title={d.verification?.token}>{d.verification?.token}</span>
                                       <button onClick={() => handleCopy(d.verification?.token)} title="Copy"><Copy size={12}/></button>
                                     </div>
                                   </td>
-                                  <td>-</td>
-                                  <td>DNS Only</td>
+                                  <td data-label="Priority">-</td>
+                                  <td data-label="Proxy Status">DNS Only</td>
                                 </tr>
                                 
                                 <tr>
-                                  <td><span className="dns-type">MX</span></td>
-                                  <td>
+                                  <td data-label="Type"><span className="dns-type">MX</span></td>
+                                  <td data-label="Name / Host">
                                     <div className="dns-copyable">
                                       <span>{d.domain}</span>
                                       <button onClick={() => handleCopy(d.domain)} title="Copy"><Copy size={12}/></button>
                                     </div>
                                   </td>
-                                  <td>
+                                  <td data-label="Value">
                                     <div className="dns-copyable">
                                       <span>mx.graxion.in</span>
                                       <button onClick={() => handleCopy('mx.graxion.in')} title="Copy"><Copy size={12}/></button>
                                     </div>
                                   </td>
-                                  <td>10</td>
-                                  <td>DNS Only</td>
+                                  <td data-label="Priority">10</td>
+                                  <td data-label="Proxy Status">DNS Only</td>
                                 </tr>
 
                                 <tr>
-                                  <td><span className="dns-type">TXT</span></td>
-                                  <td>
+                                  <td data-label="Type"><span className="dns-type">TXT</span></td>
+                                  <td data-label="Name / Host">
                                     <div className="dns-copyable">
                                       <span>{d.domain}</span>
                                       <button onClick={() => handleCopy(d.domain)} title="Copy"><Copy size={12}/></button>
                                     </div>
                                   </td>
-                                  <td>
+                                  <td data-label="Value">
                                     <div className="dns-copyable">
                                       <span>v=spf1 include:spf.graxion.in ~all</span>
                                       <button onClick={() => handleCopy('v=spf1 include:spf.graxion.in ~all')} title="Copy"><Copy size={12}/></button>
                                     </div>
                                   </td>
-                                  <td>-</td>
-                                  <td>DNS Only</td>
+                                  <td data-label="Priority">-</td>
+                                  <td data-label="Proxy Status">DNS Only</td>
                                 </tr>
                               </tbody>
                             </table>

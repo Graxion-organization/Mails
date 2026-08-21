@@ -128,8 +128,20 @@ export const verifyDomain = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Domain not found' });
     }
 
-    // In production, we would DNS lookup to verify the TXT record
-    // For development, we'll simulate verification
+    // Real DNS lookup to verify the TXT record
+    try {
+      const dns = await import('dns/promises');
+      const txtRecords = await dns.resolveTxt(`_graxion.${domain.domain}`);
+      const joinedRecords = txtRecords.map(recordChunks => recordChunks.join(''));
+      
+      if (!joinedRecords.includes(domain.verification.token)) {
+        return res.status(400).json({ success: false, message: 'DNS verification failed. The required TXT record was not found.' });
+      }
+    } catch (dnsError) {
+      console.error('DNS Lookup Error:', dnsError);
+      return res.status(400).json({ success: false, message: 'DNS lookup failed. Please ensure you have added the TXT record and wait a few minutes for propagation.' });
+    }
+
     domain.status = 'verified';
     domain.verification.verifiedAt = new Date();
     domain.dnsRecords.spf.configured = true;
