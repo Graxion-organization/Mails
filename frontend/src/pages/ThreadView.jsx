@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Reply, Forward, MoreVertical, Archive, Trash2, Eye, User, FileText, CheckCircle2, Tag, Paperclip, Smile, Type, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Reply, Forward, MoreVertical, Archive, Trash2, Eye, User, FileText, CheckCircle2, Tag, Paperclip, Smile, Type, ChevronDown, X } from 'lucide-react';
 import api from '../utils/api';
 import { format } from 'date-fns';
 import { useSocket } from '../context/SocketContext';
 import { useMail } from '../context/MailContext';
 import toast from 'react-hot-toast';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 
 export default function ThreadView() {
   const { threadId } = useParams();
@@ -27,7 +28,10 @@ export default function ThreadView() {
   // Inline Composer State
   const [replyText, setReplyText] = useState('');
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchThread();
@@ -133,6 +137,27 @@ export default function ThreadView() {
     } finally {
       setIsSubmittingNote(false);
     }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files) {
+      setAttachments([...attachments, ...Array.from(e.target.files)]);
+    }
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
+
+  const onEmojiClick = (emojiObject) => {
+    setReplyText(prev => prev + emojiObject.emoji);
+    setShowEmojiPicker(false);
+    setTimeout(() => {
+       if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = Math.min(Math.max(textareaRef.current.scrollHeight, 120), 240) + 'px';
+       }
+    }, 10);
   };
 
   const handleTextareaInput = (e) => {
@@ -354,9 +379,9 @@ export default function ThreadView() {
       </div>
 
       {/* Sticky Reply Composer (Bottom) */}
-      <div className="sticky bottom-0 z-20 bg-surface border-t border-border shrink-0 px-2 sm:px-4 md:px-6 lg:px-10 py-3 transition-all duration-200">
+      <div className="sticky bottom-0 z-20 w-full pb-4 px-2 sm:px-4 md:px-6 lg:px-8 shrink-0 transition-all duration-200">
         <div 
-          className="bg-card border border-border rounded-xl flex flex-col overflow-hidden shadow-2xl focus-within:border-white/20 transition-colors"
+          className="bg-card border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl focus-within:border-white/20 transition-all duration-200 mx-auto w-full max-w-5xl"
           onClick={() => {
             if (!isComposerExpanded) {
               setIsComposerExpanded(true);
@@ -376,7 +401,7 @@ export default function ThreadView() {
             </div>
             <textarea 
               ref={textareaRef}
-              className={`w-full bg-transparent border-none text-main text-[14px] outline-none resize-none transition-all duration-200 ${isComposerExpanded ? 'min-h-[120px] max-h-[240px] pt-1.5' : 'h-[24px] pt-0.5 overflow-hidden'}`}
+              className={`w-full bg-transparent border-none text-main text-[14px] outline-none resize-none transition-all duration-200 ${isComposerExpanded ? 'min-h-[160px] max-h-[300px] pt-1.5' : 'h-[24px] pt-0.5 overflow-hidden'}`}
               placeholder="Reply..."
               value={replyText}
               onChange={handleTextareaInput}
@@ -384,15 +409,53 @@ export default function ThreadView() {
                 if (!isComposerExpanded) {
                   setIsComposerExpanded(true);
                   setTimeout(() => {
-                    if (textareaRef.current) textareaRef.current.style.height = '120px';
+                    if (textareaRef.current) textareaRef.current.style.height = '160px';
                   }, 10);
                 }
               }}
             />
           </div>
+
+          {/* Attachments rendering */}
+          {attachments.length > 0 && isComposerExpanded && (
+            <div className="flex flex-wrap gap-2 px-4 pb-3">
+              {attachments.map((file, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-surface border border-white/10 rounded-md px-3 py-1.5">
+                  <FileText size={14} className="text-secondary" />
+                  <span className="text-[12px] text-main max-w-[120px] truncate">{file.name}</span>
+                  <button 
+                    className="text-secondary hover:text-danger ml-1" 
+                    onClick={(e) => { e.stopPropagation(); removeAttachment(idx); }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            className="hidden" 
+            multiple 
+          />
           
           {isComposerExpanded && (
-            <div className="flex flex-wrap items-center justify-between p-3 bg-surface border-t border-white/5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex flex-wrap items-center justify-between p-3 bg-[#111827] border-t border-white/5 animate-in fade-in slide-in-from-top-2 duration-200 relative">
+              
+              {/* Emoji Picker Popover */}
+              {showEmojiPicker && (
+                <div className="absolute bottom-[110%] left-10 z-50 shadow-2xl border border-white/10 rounded-xl overflow-hidden">
+                  <EmojiPicker 
+                    theme={Theme.DARK}
+                    onEmojiClick={onEmojiClick} 
+                    searchDisabled
+                    skinTonesDisabled
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <button 
                   className="flex items-center bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-md text-[13px] font-medium transition-colors cursor-pointer disabled:opacity-50"
@@ -400,20 +463,28 @@ export default function ThreadView() {
                     e.stopPropagation();
                     toast.success("Reply sent!");
                     setReplyText("");
+                    setAttachments([]);
                     setIsComposerExpanded(false);
+                    setShowEmojiPicker(false);
                     textareaRef.current.style.height = '24px';
                   }}
-                  disabled={!replyText.trim()}
+                  disabled={!replyText.trim() && attachments.length === 0}
                 >
                   <Reply size={14} className="mr-2"/> Send <ChevronDown size={14} className="ml-2"/>
                 </button>
                 
                 <div className="w-px h-6 bg-border mx-2"></div>
                 
-                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors">
+                <button 
+                  className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                >
                    <Paperclip size={18}/>
                 </button>
-                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors">
+                <button 
+                  className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
+                >
                    <Smile size={18}/>
                 </button>
                 <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors">
@@ -424,7 +495,9 @@ export default function ThreadView() {
                 onClick={(e) => {
                   e.stopPropagation();
                   setReplyText("");
+                  setAttachments([]);
                   setIsComposerExpanded(false);
+                  setShowEmojiPicker(false);
                   textareaRef.current.style.height = '24px';
                 }}
               >
