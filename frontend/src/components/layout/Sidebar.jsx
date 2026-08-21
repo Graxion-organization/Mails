@@ -76,14 +76,18 @@ export default function Sidebar({ isOpen, onClose }) {
             onClick={onClose}
             className={({ isActive }) => `flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-[14px] font-medium ${isActive ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-white/5 hover:text-main'}`}
           >
-            <div className="flex items-center gap-3">
-              <item.icon size={18} className={({ isActive }) => isActive ? 'text-primary' : 'text-secondary'} />
-              <span>{item.label}</span>
-            </div>
-            {item.count > 0 && (
-              <span className="bg-primary/20 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full">
-                {item.count}
-              </span>
+            {({ isActive }) => (
+              <>
+                <div className="flex items-center gap-3">
+                  <item.icon size={18} className={isActive ? 'text-primary' : 'text-secondary'} />
+                  <span>{item.label}</span>
+                </div>
+                {item.count > 0 && (
+                  <span className="bg-primary/20 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full">
+                    {item.count}
+                  </span>
+                )}
+              </>
             )}
           </NavLink>
         ))}
