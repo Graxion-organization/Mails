@@ -271,13 +271,13 @@ export default function Settings() {
                             <div>
                               <span style={{ color: 'var(--text-muted)' }}>MX Record (Receive Email):</span>
                               <code style={{ display: 'block', padding: '8px', background: '#09090b', border: '1px solid #27272a', borderRadius: '6px', marginTop: '4px', wordBreak: 'break-all' }}>
-                                Name: {d.domain} &nbsp;&nbsp;&nbsp; Value: inbound.resend.com &nbsp;&nbsp;&nbsp; Priority: 10
+                                Name: {d.domain} &nbsp;&nbsp;&nbsp; Value: mx.graxion.in &nbsp;&nbsp;&nbsp; Priority: 10
                               </code>
                             </div>
                             <div>
                               <span style={{ color: 'var(--text-muted)' }}>TXT Record (SPF / Deliverability):</span>
                               <code style={{ display: 'block', padding: '8px', background: '#09090b', border: '1px solid #27272a', borderRadius: '6px', marginTop: '4px', wordBreak: 'break-all' }}>
-                                Name: {d.domain} &nbsp;&nbsp;&nbsp; Value: v=spf1 include:resend.com ~all
+                                Name: {d.domain} &nbsp;&nbsp;&nbsp; Value: v=spf1 include:spf.graxion.in ~all
                               </code>
                             </div>
                           </div>

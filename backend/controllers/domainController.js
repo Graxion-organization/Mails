@@ -58,14 +58,14 @@ export const addDomain = async (req, res) => {
           mx: {
             type: 'MX',
             host: normalized,
-            value: 'inbound.resend.com',
+            value: 'mx.graxion.in',
             priority: 10,
-            purpose: 'Receive emails via Resend',
+            purpose: 'Receive emails via Graxion',
           },
           spf: {
             type: 'TXT',
             host: normalized,
-            value: 'v=spf1 include:resend.com ~all',
+            value: 'v=spf1 include:spf.graxion.in ~all',
             purpose: 'SPF record for email authentication',
           },
         },

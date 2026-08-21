@@ -301,15 +301,12 @@ button {
   border-radius: 8px;
 }
 .thread-message-body {
-  margin-top: 16px;
   font-size: 14px;
   line-height: 1.6;
   padding: 24px;
   background-color: #ffffff;
   color: #1f2937;
-  border-radius: 8px;
   overflow-x: auto;
-  border: 1px solid var(--border-color);
 }
 
 .thread-message-body img {
