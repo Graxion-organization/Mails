@@ -216,11 +216,10 @@ export default function ThreadView() {
         <div className="thread-subject-header">
           <h2 className="thread-subject">{thread.subject}</h2>
           <div className="thread-count-badge">{messages.length} email{messages.length !== 1 ? 's' : ''}</div>
-        </div>
-        <div className="thread-labels">
-            {thread.labels?.map(l => (
-              <span key={l._id} className="thread-label-badge" style={{backgroundColor: l.color}}>{l.name}</span>
-            ))}
+          <div className="thread-labels">
+              {thread.labels?.map(l => (
+                <span key={l._id} className="thread-label-badge" style={{backgroundColor: l.color}}>{l.name}</span>
+              ))}
           </div>
         </div>
 
