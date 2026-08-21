@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useMail } from '../../context/MailContext';
 import { X, Minus, Maximize2, Paperclip, Send, Clock, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../utils/api';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 export default function Composer() {
   const { closeComposer, activeOrg, activeMailbox, composerInitialData } = useMail();
@@ -12,7 +14,19 @@ export default function Composer() {
   const [to, setTo] = useState(composerInitialData?.to || '');
   const [subject, setSubject] = useState(composerInitialData?.subject || '');
   const [body, setBody] = useState(composerInitialData?.body || '');
+  const [attachments, setAttachments] = useState([]);
   const [isSending, setIsSending] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    if (e.target.files) {
+      setAttachments([...attachments, ...Array.from(e.target.files)]);
+    }
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
 
   const handleSend = async () => {
     if (!to) return toast.error('Please specify a recipient');
@@ -20,24 +34,35 @@ export default function Composer() {
     setIsSending(true);
     try {
       const recipients = to.split(',').map(email => email.trim()).filter(Boolean);
+      const cleanBodyText = body.replace(/<[^>]+>/g, ''); // strip HTML for plain text fallback
+      
+      const formData = new FormData();
+      formData.append('organizationId', activeOrg?._id);
+      formData.append('mailboxId', activeMailbox?._id);
+      
+      recipients.forEach(email => formData.append('to[]', email));
       
       if (composerInitialData?.type === 'reply') {
-        await api.post('/mail/reply', {
-          organizationId: activeOrg?._id,
-          mailboxId: activeMailbox?._id,
-          messageId: composerInitialData.messageId,
-          to: recipients,
-          bodyText: body,
-          bodyHtml: `<p>${body.replace(/\n/g, '<br/>')}</p>`,
+        formData.append('messageId', composerInitialData.messageId);
+        formData.append('replyAll', false);
+      } else {
+        formData.append('subject', subject);
+      }
+      
+      formData.append('bodyText', cleanBodyText);
+      formData.append('bodyHtml', body);
+      
+      attachments.forEach(file => {
+        formData.append('attachments', file);
+      });
+
+      if (composerInitialData?.type === 'reply') {
+        await api.post('/mail/reply', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
       } else {
-        await api.post('/mail/send', {
-          organizationId: activeOrg?._id,
-          mailboxId: activeMailbox?._id,
-          to: recipients,
-          subject,
-          bodyText: body,
-          bodyHtml: `<p>${body.replace(/\n/g, '<br/>')}</p>`,
+        await api.post('/mail/send', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
       }
       
@@ -101,11 +126,38 @@ export default function Composer() {
           />
         </div>
         
-        <textarea 
-          className="flex-1 w-full bg-transparent border-none outline-none text-[14px] text-main p-4 resize-none leading-relaxed placeholder-secondary/50"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-        />
+        <div className="flex-1 flex flex-col bg-white text-black overflow-y-auto">
+          <style>{`
+            .ql-toolbar.ql-snow { border: none !important; border-bottom: 1px solid #e5e7eb !important; }
+            .ql-container.ql-snow { border: none !important; }
+            .ql-editor { min-height: 200px; font-size: 14px; }
+          `}</style>
+          <ReactQuill 
+            theme="snow"
+            value={body}
+            onChange={setBody}
+            placeholder="Write something..."
+            className="flex-1 flex flex-col"
+          />
+        </div>
+        
+        {/* Attachments rendering */}
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-4 py-3 border-t border-white/5">
+            {attachments.map((file, idx) => (
+              <div key={idx} className="flex items-center gap-2 bg-surface border border-white/10 rounded-md px-3 py-1.5">
+                <Paperclip size={14} className="text-secondary" />
+                <span className="text-[12px] text-main max-w-[120px] truncate">{file.name}</span>
+                <button 
+                  className="text-secondary hover:text-danger ml-1" 
+                  onClick={() => removeAttachment(idx)}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       
       <div className="flex items-center justify-between px-4 py-3 bg-surface border-t border-white/5 rounded-b-xl shrink-0">
@@ -122,7 +174,10 @@ export default function Composer() {
               <Clock size={16} />
             </button>
           </div>
-          <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors"><Paperclip size={18} /></button>
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple />
+          <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 text-secondary hover:text-main transition-colors" onClick={() => fileInputRef.current?.click()}>
+            <Paperclip size={18} />
+          </button>
         </div>
         <div className="flex items-center">
           <button onClick={closeComposer} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-danger/10 text-secondary hover:text-danger transition-colors"><Trash2 size={18} /></button>
