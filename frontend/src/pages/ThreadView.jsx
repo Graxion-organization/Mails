@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Reply, Forward, MoreVertical, Archive, Trash2, Eye, User, FileText, CheckCircle2, Tag, Paperclip, Smile, Type, ChevronDown, X } from 'lucide-react';
+import { ArrowLeft, Reply, Forward, MoreVertical, Archive, Trash2, Eye, User, FileText, CheckCircle2, Tag, Paperclip, Smile, Type, ChevronDown, X, Image as ImageIcon, Link2, Bold, Italic, List, Code, Save, ChevronUp } from 'lucide-react';
 import api from '../utils/api';
 import { format } from 'date-fns';
 import { useSocket } from '../context/SocketContext';
@@ -27,7 +27,6 @@ export default function ThreadView() {
 
   // Inline Composer State
   const [replyText, setReplyText] = useState('');
-  const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef(null);
@@ -379,61 +378,58 @@ export default function ThreadView() {
       </div>
 
       {/* Sticky Reply Composer (Bottom) */}
-      <div className="sticky bottom-0 z-20 w-full pb-4 px-2 sm:px-4 md:px-6 lg:px-8 shrink-0 transition-all duration-200">
-        <div 
-          className="bg-card border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl focus-within:border-white/20 transition-all duration-200 mx-auto w-full max-w-5xl"
-          onClick={() => {
-            if (!isComposerExpanded) {
-              setIsComposerExpanded(true);
-              setTimeout(() => {
-                if (textareaRef.current) {
-                   textareaRef.current.style.height = '120px';
-                   textareaRef.current.focus();
-                }
-              }, 10);
-            }
-          }}
-        >
+      <div className="sticky bottom-0 z-20 w-full pb-4 px-2 sm:px-4 md:px-6 lg:px-8 shrink-0">
+        <div className="bg-surface border border-white/10 rounded-[20px] flex flex-col shadow-2xl focus-within:border-white/20 transition-all duration-200 mx-auto w-full max-w-5xl">
           
-          <div className={`flex gap-3 px-4 ${isComposerExpanded ? 'pt-4 pb-2' : 'py-2.5 items-center'}`}>
-            <div className={`${isComposerExpanded ? 'w-8 h-8' : 'w-7 h-7'} rounded-full bg-primary text-white flex items-center justify-center text-[13px] font-semibold shrink-0 transition-all`}>
-              Y
+          {/* Top Context Row */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-[13px] font-semibold shrink-0">
+                {activeOrg?.name?.[0] || 'Y'}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[14px] font-medium text-main">
+                  Replying to <span className="text-main">{data?.participants?.[0]?.name || 'Graxion Privacy'}</span>
+                </span>
+                <span className="text-[12px] text-secondary">
+                  {data?.participants?.[0]?.email || 'privacy@graxion.com'}
+                </span>
+              </div>
             </div>
-            <textarea 
-              ref={textareaRef}
-              className={`w-full bg-transparent border-none text-main text-[14px] outline-none resize-none transition-all duration-200 ${isComposerExpanded ? 'min-h-[160px] max-h-[300px] pt-1.5' : 'h-[24px] pt-0.5 overflow-hidden'}`}
-              placeholder="Reply..."
-              value={replyText}
-              onChange={handleTextareaInput}
-              onFocus={() => {
-                if (!isComposerExpanded) {
-                  setIsComposerExpanded(true);
-                  setTimeout(() => {
-                    if (textareaRef.current) textareaRef.current.style.height = '160px';
-                  }, 10);
-                }
-              }}
-            />
+            <button className="text-[13px] font-medium text-secondary hover:text-main hover:bg-white/5 px-3 py-1.5 rounded-lg transition-colors">
+              Cc / Bcc
+            </button>
           </div>
 
-          {/* Attachments rendering */}
-          {attachments.length > 0 && isComposerExpanded && (
-            <div className="flex flex-wrap gap-2 px-4 pb-3">
-              {attachments.map((file, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-surface border border-white/10 rounded-md px-3 py-1.5">
-                  <FileText size={14} className="text-secondary" />
-                  <span className="text-[12px] text-main max-w-[120px] truncate">{file.name}</span>
-                  <button 
-                    className="text-secondary hover:text-danger ml-1" 
-                    onClick={(e) => { e.stopPropagation(); removeAttachment(idx); }}
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          
+          {/* Editor Area */}
+          <div className="p-5">
+            <textarea 
+              ref={textareaRef}
+              className="w-full bg-transparent border-none text-main text-[15px] outline-none resize-none leading-relaxed placeholder-secondary/50 min-h-[140px] max-h-[280px]"
+              placeholder="Write your reply..."
+              value={replyText}
+              onChange={handleTextareaInput}
+            />
+            
+            {/* Attachments rendering */}
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {attachments.map((file, idx) => (
+                  <div key={idx} className="flex items-center gap-2 bg-bg border border-white/10 rounded-lg px-3 py-2">
+                    <FileText size={16} className="text-secondary" />
+                    <span className="text-[13px] font-medium text-main max-w-[150px] truncate">{file.name}</span>
+                    <button 
+                      className="text-secondary hover:text-danger ml-2 p-0.5 rounded-md hover:bg-white/5" 
+                      onClick={(e) => { e.stopPropagation(); removeAttachment(idx); }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -442,69 +438,99 @@ export default function ThreadView() {
             multiple 
           />
           
-          {isComposerExpanded && (
-            <div className="flex flex-wrap items-center justify-between p-3 bg-[#111827] border-t border-white/5 animate-in fade-in slide-in-from-top-2 duration-200 relative">
+          {/* Toolbar & Actions Row */}
+          <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-4 bg-bg border-t border-white/5 rounded-b-[20px] relative gap-4">
+            
+            {/* Emoji Picker Popover */}
+            {showEmojiPicker && (
+              <div className="absolute bottom-[110%] left-5 z-50 shadow-2xl border border-white/10 rounded-xl overflow-hidden">
+                <EmojiPicker 
+                  theme={Theme.DARK}
+                  onEmojiClick={onEmojiClick} 
+                  searchDisabled
+                  skinTonesDisabled
+                />
+              </div>
+            )}
+
+            {/* Left side: Primary Action & Formatting */}
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <button 
+                className="flex items-center bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-5 py-2.5 rounded-xl text-[14px] font-medium transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toast.success("Reply sent!");
+                  setReplyText("");
+                  setAttachments([]);
+                  setShowEmojiPicker(false);
+                }}
+                disabled={!replyText.trim() && attachments.length === 0}
+              >
+                Send Reply <ChevronDown size={16} className="ml-2 opacity-80"/>
+              </button>
               
-              {/* Emoji Picker Popover */}
-              {showEmojiPicker && (
-                <div className="absolute bottom-[110%] left-10 z-50 shadow-2xl border border-white/10 rounded-xl overflow-hidden">
-                  <EmojiPicker 
-                    theme={Theme.DARK}
-                    onEmojiClick={onEmojiClick} 
-                    searchDisabled
-                    skinTonesDisabled
-                  />
-                </div>
-              )}
-              <div className="flex items-center gap-2">
+              <div className="w-px h-6 bg-white/10 hidden sm:block"></div>
+              
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                 <button 
-                  className="flex items-center bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-md text-[13px] font-medium transition-colors cursor-pointer disabled:opacity-50"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toast.success("Reply sent!");
-                    setReplyText("");
-                    setAttachments([]);
-                    setIsComposerExpanded(false);
-                    setShowEmojiPicker(false);
-                    textareaRef.current.style.height = '24px';
-                  }}
-                  disabled={!replyText.trim() && attachments.length === 0}
-                >
-                  <Reply size={14} className="mr-2"/> Send <ChevronDown size={14} className="ml-2"/>
-                </button>
-                
-                <div className="w-px h-6 bg-border mx-2"></div>
-                
-                <button 
-                  className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors"
+                  className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors shrink-0"
                   onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                  title="Attach file"
                 >
                    <Paperclip size={18}/>
                 </button>
                 <button 
-                  className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors"
+                  className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors shrink-0"
                   onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
+                  title="Insert emoji"
                 >
                    <Smile size={18}/>
                 </button>
-                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors">
-                   <Type size={18}/>
+                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors shrink-0" title="Insert image">
+                   <ImageIcon size={18}/>
+                </button>
+                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors shrink-0" title="Insert link">
+                   <Link2 size={18}/>
+                </button>
+                
+                <div className="w-px h-6 bg-white/10 mx-1 shrink-0"></div>
+                
+                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors shrink-0" title="Bold">
+                   <Bold size={18}/>
+                </button>
+                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors shrink-0" title="Italic">
+                   <Italic size={18}/>
+                </button>
+                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors shrink-0" title="Bullet list">
+                   <List size={18}/>
+                </button>
+                <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/10 transition-colors shrink-0" title="Code block">
+                   <Code size={18}/>
                 </button>
               </div>
-              <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-danger hover:bg-danger/10 transition-colors"
+            </div>
+
+            {/* Right side: Secondary Actions */}
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end sm:justify-start">
+              <button 
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors text-[13px] font-medium"
+                title="Save as draft"
+              >
+                <Save size={16} /> <span className="hidden lg:inline">Save Draft</span>
+              </button>
+              <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-danger hover:bg-danger/10 transition-colors shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   setReplyText("");
                   setAttachments([]);
-                  setIsComposerExpanded(false);
                   setShowEmojiPicker(false);
-                  textareaRef.current.style.height = '24px';
                 }}
+                title="Discard draft"
               >
                 <Trash2 size={18}/>
               </button>
             </div>
-          )}
+          </div>
           
         </div>
       </div>
