@@ -37,6 +37,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 connectDB();
 
 const app = express();
+app.set('trust proxy', 1);
 
 // CORS — Allow all Graxion products
 const allowedOrigins = [

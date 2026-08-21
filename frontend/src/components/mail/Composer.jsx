@@ -48,7 +48,7 @@ export default function Composer() {
       const payload = {
         organizationId: activeOrg?._id,
         mailboxId: activeMailbox?._id,
-        to: to.split(',').map(e => e.trim()).filter(Boolean),
+        to: to.split(',').map(e => ({ email: e.trim() })).filter(e => e.email),
         subject,
         bodyHtml: body,
         bodyText: body.replace(/<[^>]+>/g, ''),
@@ -119,7 +119,7 @@ export default function Composer() {
     
     setIsSending(true);
     try {
-      const recipients = to.split(',').map(email => email.trim()).filter(Boolean);
+      const recipients = to.split(',').map(email => ({ email: email.trim() })).filter(e => e.email);
       const cleanBodyText = body.replace(/<[^>]+>/g, '');
       
       const payload = {

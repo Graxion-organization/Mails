@@ -45,7 +45,7 @@ export const composeSend = async (req, res) => {
  */
 export const replyToMessage = async (req, res) => {
   try {
-    const { messageId, organizationId, mailboxId, to, cc, bcc, bodyHtml, bodyText, replyAll, signatureHtml } = req.body;
+    const { messageId, organizationId, mailboxId, to, cc, bcc, bodyHtml, bodyText, attachments, replyAll, signatureHtml } = req.body;
 
     const originalMessage = await Message.findById(messageId);
     if (!originalMessage) {
@@ -76,6 +76,7 @@ export const replyToMessage = async (req, res) => {
       subject: originalMessage.subject.startsWith('Re:') ? originalMessage.subject : `Re: ${originalMessage.subject}`,
       bodyHtml,
       bodyText,
+      attachments,
       inReplyTo: originalMessage.messageId,
       threadId: originalMessage.thread,
       signatureHtml,
