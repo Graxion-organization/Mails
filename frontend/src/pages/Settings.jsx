@@ -348,8 +348,19 @@ export default function Settings() {
         </div>
 
         <div className="settings-content">
-          <div className="settings-header">
-            <h1>Settings</h1>
+            <div className="flex items-center justify-between mb-8">
+              <h1>Settings</h1>
+              <button 
+                onClick={async () => {
+                  const res = await api.get(`/orgs/${activeOrg._id}/mailboxes/debug`);
+                  console.log("DEBUG MAILBOXES:", res.data);
+                  alert(JSON.stringify(res.data, null, 2));
+                }}
+                className="btn-ghost"
+              >
+                Debug
+              </button>
+            </div>
             <p>Manage your organization's domains, mailboxes, and team members.</p>
           </div>
 

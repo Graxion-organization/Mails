@@ -2,13 +2,14 @@ import { NavLink } from 'react-router-dom';
 import { useMail } from '../../context/MailContext';
 import { 
   Inbox, Send, File, Archive, AlertOctagon, Trash2, 
-  Settings, PenBox, ChevronDown, Check
+  Settings, PenBox, ChevronDown, Check, Building
 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Sidebar({ isOpen, onClose }) {
-  const { mailboxes, activeMailbox, setActiveMailbox, openComposer, stats, labels } = useMail();
+  const { orgs, activeOrg, setActiveOrg, mailboxes, activeMailbox, setActiveMailbox, openComposer, stats, labels } = useMail();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
 
   const navItems = [
     { id: 'inbox', label: 'Inbox', icon: Inbox, path: '/inbox', count: stats.unread },
@@ -21,6 +22,45 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <div className={`w-[260px] bg-sidebar border-r border-white/5 flex flex-col transition-transform duration-300 z-[100] shrink-0 ${isOpen ? 'translate-x-0 fixed inset-y-0 left-0' : '-translate-x-full fixed inset-y-0 left-0 lg:translate-x-0 lg:static'}`}>
+      
+      {/* Organization Selector */}
+      <div className="px-4 pt-4 pb-2 border-b border-white/5 relative">
+        <button 
+          className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors text-left"
+          onClick={() => {
+            setIsOrgDropdownOpen(!isOrgDropdownOpen);
+            setIsDropdownOpen(false);
+          }}
+        >
+          <div className="flex items-center gap-2 overflow-hidden">
+            <Building size={16} className="text-secondary shrink-0" />
+            <div className="text-[13px] font-semibold text-main truncate">{activeOrg?.name || 'Select Organization'}</div>
+          </div>
+          <ChevronDown size={14} className="text-secondary shrink-0 ml-2" />
+        </button>
+        
+        {isOrgDropdownOpen && (
+          <div className="absolute top-full left-4 right-4 mt-1 bg-surface border border-white/10 rounded-xl shadow-2xl py-1 z-50 max-h-[300px] overflow-y-auto">
+            {orgs.map(org => (
+              <button 
+                key={org._id} 
+                className="w-full flex items-center justify-between px-4 py-2 hover:bg-white/5 transition-colors text-left"
+                onClick={() => {
+                  setActiveOrg(org);
+                  setIsOrgDropdownOpen(false);
+                }}
+              >
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <Building size={14} className="text-secondary shrink-0" />
+                  <div className="text-[13px] font-medium text-main truncate">{org.name}</div>
+                </div>
+                {activeOrg?._id === org._id && <Check size={14} className="text-primary shrink-0 ml-2" />}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Mailbox Selector */}
       <div className="p-4 border-b border-white/5 relative">
         <button 

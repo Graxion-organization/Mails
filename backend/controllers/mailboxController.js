@@ -104,10 +104,14 @@ export const listMailboxes = async (req, res) => {
     if (!['owner', 'admin'].includes(req.member?.role)) {
       query['members.account'] = req.accountId;
     }
-    
+
+    console.log(`[DEBUG listMailboxes] Role: ${req.member?.role}, AccountId: ${req.accountId}, Query:`, query);
+
     const mailboxes = await Mailbox.find(query)
       .populate('domain', 'domain status')
       .sort({ type: 1, address: 1 });
+
+    console.log(`[DEBUG listMailboxes] Returned ${mailboxes.length} mailboxes for AccountId: ${req.accountId}`);
 
     res.json({ success: true, data: mailboxes });
   } catch (error) {

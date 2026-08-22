@@ -357,17 +357,19 @@ export const updateMemberMailboxes = async (req, res) => {
     const { default: Mailbox } = await import('../models/Mailbox.js');
 
     // First, remove this member from ALL mailboxes in the org
-    await Mailbox.updateMany(
+    const pullResult = await Mailbox.updateMany(
       { organization: req.params.orgId },
       { $pull: { members: { account: member.account } } }
     );
+    console.log(`[DEBUG] updateMemberMailboxes - pull result for ${member.account}:`, pullResult);
 
     // Then, add them to the requested mailboxes
     if (mailboxIds.length > 0) {
-      await Mailbox.updateMany(
+      const pushResult = await Mailbox.updateMany(
         { _id: { $in: mailboxIds }, organization: req.params.orgId },
         { $push: { members: { account: member.account, role: 'agent' } } }
       );
+      console.log(`[DEBUG] updateMemberMailboxes - push result for ${mailboxIds}:`, pushResult);
     }
 
     await AuditLog.create({
