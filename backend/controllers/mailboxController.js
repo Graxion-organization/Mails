@@ -24,7 +24,43 @@ export const createMailbox = async (req, res) => {
     // Check if address exists
     const existing = await Mailbox.findOne({ address });
     if (existing) {
-      return res.status(409).json({ success: false, message: 'This email address is already in use' });
+      if (existing.organization.toString() === req.params.orgId) {
+        if (!existing.isActive) {
+          // Reactivate it
+          existing.isActive = true;
+          existing.displayName = displayName || localPart;
+          existing.type = type;
+          existing.domain = domain._id;
+          
+          // Ensure current user is a member
+          const isMember = existing.members.some(m => m.account.toString() === req.accountId);
+          if (!isMember) {
+            existing.members.push({ account: req.accountId, role: 'owner' });
+          }
+          
+          await existing.save();
+          
+          await AuditLog.create({
+            organization: req.params.orgId,
+            account: req.accountId,
+            action: 'mailbox.reactivated',
+            target: { type: 'mailbox', id: existing._id.toString() },
+            metadata: { address },
+          });
+
+          return res.status(200).json({ success: true, message: 'Mailbox restored successfully', data: existing });
+        } else {
+          return res.status(409).json({ success: false, message: 'This email address is already in use in your organization' });
+        }
+      } else {
+        // Exists in a DIFFERENT organization.
+        // Since the current org just proved ownership of the verified domain, they have the right to claim this address.
+        // We orphan the old mailbox to free up the address for the rightful domain owner.
+        existing.address = `${existing.address}_orphaned_${Date.now()}`;
+        existing.isActive = false;
+        await existing.save();
+        // Proceed to create the new mailbox for the current org below
+      }
     }
 
     const mailbox = await Mailbox.create({
