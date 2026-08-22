@@ -60,7 +60,7 @@ export const inviteMember = async (req, res) => {
     try {
       const org = await Organization.findById(req.params.orgId);
       const resend = getResend();
-      const inviteUrl = `${process.env.FRONTEND_URL}/invite?token=${inviteToken}`;
+      const inviteUrl = `${process.env.CLIENT_URL}/invite?token=${inviteToken}`;
       
       await resend.emails.send({
         from: 'Graxion Mail <noreply@graxion.in>',
