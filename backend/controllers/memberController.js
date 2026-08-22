@@ -208,7 +208,21 @@ export const acceptInvite = async (req, res) => {
 
     // A user might be accepting this with a different email than they were invited with,
     // but they must be logged into a valid Graxion account (req.accountId).
-    // The design choice is that if they have the token, they can claim it.
+    
+    // Check if they were previously a member and got removed (soft deleted)
+    const existingMember = await Member.findOne({
+      organization: member.organization,
+      account: req.accountId,
+    });
+
+    if (existingMember) {
+      if (existingMember.status === 'removed') {
+        // Delete the old removed record so the unique index (org, account) doesn't conflict
+        await Member.deleteOne({ _id: existingMember._id });
+      } else {
+        return res.status(400).json({ success: false, message: 'You are already a member of this organization.' });
+      }
+    }
 
     member.account = req.accountId;
     member.status = 'pending_approval';
