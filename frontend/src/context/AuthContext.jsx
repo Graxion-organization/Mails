@@ -54,10 +54,9 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        // 5. Fetch profile data from Auth service
+        // 5. Fetch profile data from Mail service (which proxies from Auth service)
         try {
-          const authApiUrl = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:6000/api';
-          const profileRes = await fetch(`${authApiUrl}/profile`, {
+          const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/user/me`, {
             headers: {
               Authorization: `Bearer ${token}`
             }

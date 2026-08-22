@@ -26,6 +26,7 @@ import contactRoutes from './routes/contactRoutes.js';
 import attachmentRoutes from './routes/attachmentRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import searchRoutes from './routes/searchRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 
@@ -78,6 +79,7 @@ app.use('/api', apiLimiter);
 
 // ── API Routes ──
 // Organization management
+app.use('/api/user', userRoutes);
 app.use('/api/orgs', orgRoutes);
 app.use('/api/orgs/:orgId/domains', domainRoutes);
 app.use('/api/orgs/:orgId/mailboxes', mailboxRoutes);
