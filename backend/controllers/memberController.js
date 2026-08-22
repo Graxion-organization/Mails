@@ -2,6 +2,8 @@ import crypto from 'crypto';
 import Member from '../models/Member.js';
 import Notification from '../models/Notification.js';
 import AuditLog from '../models/AuditLog.js';
+import Organization from '../models/Organization.js';
+import getResend from '../config/resend.js';
 
 /**
  * @desc    Invite a member to the organization
@@ -54,7 +56,30 @@ export const inviteMember = async (req, res) => {
       metadata: { email, role },
     });
 
-    // TODO: Send invitation email via Resend
+    // Send invitation email via Resend
+    try {
+      const org = await Organization.findById(req.params.orgId);
+      const resend = getResend();
+      const inviteUrl = `${process.env.FRONTEND_URL}/invite?token=${inviteToken}`;
+      
+      await resend.emails.send({
+        from: 'Graxion Mail <noreply@graxion.in>',
+        to: email,
+        subject: `You have been invited to join ${org?.name || 'an organization'} on Graxion Mail`,
+        html: `
+          <div style="font-family: sans-serif; padding: 20px;">
+            <h2>Invitation to join Graxion Mail</h2>
+            <p>You have been invited to join <strong>${org?.name || 'an organization'}</strong> as a <strong>${role}</strong>.</p>
+            <p>Please click the link below to accept the invitation:</p>
+            <a href="${inviteUrl}" style="display: inline-block; padding: 10px 20px; background-color: #a855f7; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">Accept Invitation</a>
+            <p style="color: #666; font-size: 12px;">This invitation will expire in 7 days.</p>
+          </div>
+        `
+      });
+    } catch (emailErr) {
+      console.error('Failed to send invite email:', emailErr);
+      // We continue since the invite was created in DB
+    }
 
     res.status(201).json({
       success: true,
@@ -75,7 +100,7 @@ export const listMembers = async (req, res) => {
   try {
     const members = await Member.find({
       organization: req.params.orgId,
-      status: { $in: ['active', 'invited'] },
+      status: { $in: ['active', 'invited', 'pending_approval'] },
     }).sort({ role: 1, createdAt: 1 });
 
     res.json({ success: true, data: members });
@@ -157,5 +182,84 @@ export const removeMember = async (req, res) => {
   } catch (error) {
     console.error('Remove member error:', error);
     res.status(500).json({ success: false, message: 'Error removing member' });
+  }
+};
+
+/**
+ * @desc    Accept an invitation
+ * @route   POST /api/orgs/members/accept-invite
+ */
+export const acceptInvite = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Invite token is required' });
+    }
+
+    const member = await Member.findOne({
+      inviteToken: token,
+      status: 'invited',
+      inviteExpiresAt: { $gt: new Date() }
+    });
+
+    if (!member) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired invitation' });
+    }
+
+    // A user might be accepting this with a different email than they were invited with,
+    // but they must be logged into a valid Graxion account (req.accountId).
+    // The design choice is that if they have the token, they can claim it.
+
+    member.account = req.accountId;
+    member.status = 'pending_approval';
+    member.inviteToken = undefined;
+    member.inviteExpiresAt = undefined;
+    await member.save();
+
+    await AuditLog.create({
+      organization: member.organization,
+      account: req.accountId,
+      action: 'member.invite_accepted',
+      target: { type: 'member', id: member._id.toString() },
+    });
+
+    res.json({ success: true, message: 'Invitation accepted. Pending admin approval.' });
+  } catch (error) {
+    console.error('Accept invite error:', error);
+    res.status(500).json({ success: false, message: 'Error accepting invitation' });
+  }
+};
+
+/**
+ * @desc    Approve a pending member
+ * @route   POST /api/orgs/:orgId/members/:memberId/approve
+ */
+export const approveMember = async (req, res) => {
+  try {
+    const member = await Member.findOne({
+      _id: req.params.memberId,
+      organization: req.params.orgId,
+      status: 'pending_approval'
+    });
+
+    if (!member) {
+      return res.status(404).json({ success: false, message: 'Pending member not found' });
+    }
+
+    member.status = 'active';
+    member.joinedAt = new Date();
+    await member.save();
+
+    await AuditLog.create({
+      organization: req.params.orgId,
+      account: req.accountId,
+      action: 'member.approved',
+      target: { type: 'member', id: member._id.toString() },
+    });
+
+    res.json({ success: true, message: 'Member approved successfully' });
+  } catch (error) {
+    console.error('Approve member error:', error);
+    res.status(500).json({ success: false, message: 'Error approving member' });
   }
 };

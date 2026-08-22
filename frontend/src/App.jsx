@@ -13,6 +13,7 @@ import Inbox from './pages/Inbox';
 import ThreadView from './pages/ThreadView';
 import Settings from './pages/Settings';
 import Onboarding from './pages/Onboarding';
+import AcceptInvite from './pages/AcceptInvite';
 import LockScreen from './components/mail/LockScreen';
 
 function RequireAuth({ children }) {
@@ -60,7 +61,7 @@ function RequireAuth({ children }) {
   }
 
   // Redirect to onboarding if needed
-  if (needsOnboarding && location.pathname !== '/onboarding') {
+  if (needsOnboarding && location.pathname !== '/onboarding' && location.pathname !== '/invite') {
     return <Navigate to="/onboarding" replace />;
   }
   
@@ -110,6 +111,12 @@ function AppRoutes() {
       <Route path="/onboarding" element={
         <RequireAuth>
           <Onboarding />
+        </RequireAuth>
+      } />
+
+      <Route path="/invite" element={
+        <RequireAuth>
+          <AcceptInvite />
         </RequireAuth>
       } />
       

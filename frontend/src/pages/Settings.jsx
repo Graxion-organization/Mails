@@ -216,13 +216,28 @@ export default function Settings() {
   const handleUpdateRole = async (memberId, newRole) => {
     try {
       setLoading(true);
-      const res = await api.put(`/orgs/${activeOrg._id}/members/${memberId}`, { role: newRole });
+      const res = await api.put(`/orgs/${activeOrg._id}/members/${memberId}/role`, { role: newRole });
       if (res.data.success) {
         toast.success('Role updated');
         loadMembers();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update role');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApproveMember = async (memberId) => {
+    try {
+      setLoading(true);
+      const res = await api.post(`/orgs/${activeOrg._id}/members/${memberId}/approve`);
+      if (res.data.success) {
+        toast.success('Member approved successfully');
+        loadMembers();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to approve member');
     } finally {
       setLoading(false);
     }
@@ -499,10 +514,24 @@ export default function Settings() {
                   {members.map(member => (
                     <div key={member._id} className="list-item">
                       <div className="item-info">
-                        <strong>{member.account?.name || member.email}</strong>
-                        <span className="text-secondary sub-text">{member.email}</span>
+                        <div className="flex items-center gap-2">
+                          <strong>{member.account?.name || member.invitedEmail || member.email}</strong>
+                          {member.status === 'invited' && <span className="status-badge pending">Invited</span>}
+                          {member.status === 'pending_approval' && <span className="status-badge warning" style={{ backgroundColor: '#f59e0b20', color: '#f59e0b', border: '1px solid #f59e0b40' }}>Needs Approval</span>}
+                        </div>
+                        <span className="text-secondary sub-text">{member.invitedEmail || member.email}</span>
                       </div>
                       <div className="item-actions">
+                        {member.status === 'pending_approval' && (
+                          <button 
+                            className="btn-primary" 
+                            style={{ padding: '4px 12px', minHeight: '32px', fontSize: '13px' }}
+                            onClick={() => handleApproveMember(member._id)}
+                            disabled={loading}
+                          >
+                            Approve
+                          </button>
+                        )}
                         <select 
                           value={member.role}
                           onChange={(e) => handleUpdateRole(member._id, e.target.value)}

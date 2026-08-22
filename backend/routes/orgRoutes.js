@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { createOrg, listOrgs, getOrg, updateOrg, deleteOrg } from '../controllers/orgController.js';
+import { acceptInvite } from '../controllers/memberController.js';
 import { protect } from '../middleware/auth.js';
 import { requireOrgMember, requireOrgRole } from '../middleware/rbac.js';
 
@@ -8,6 +9,7 @@ const router = Router();
 router.use(protect);
 
 router.post('/', createOrg);
+router.post('/accept-invite', acceptInvite);
 router.get('/', listOrgs);
 router.get('/:orgId', requireOrgMember, getOrg);
 router.put('/:orgId', requireOrgMember, requireOrgRole('owner', 'admin'), updateOrg);
