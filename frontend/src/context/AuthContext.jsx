@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
+import api from '../utils/api';
+
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
@@ -56,25 +58,13 @@ export const AuthProvider = ({ children }) => {
 
         // 5. Fetch profile data from Mail service (which proxies from Auth service)
         try {
-          const profileRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/user/me`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
+          const profileRes = await api.get('/user/me');
           
-          if (profileRes.ok) {
-            const profileData = await profileRes.json();
-            setUser({
-              id: decoded.id,
-              sessionId: decoded.sessionId,
-              ...profileData.data // This will include avatar, fullName, email, etc.
-            });
-          } else {
-             setUser({
-               id: decoded.id,
-               sessionId: decoded.sessionId,
-             });
-          }
+          setUser({
+            id: decoded.id,
+            sessionId: decoded.sessionId,
+            ...profileRes.data.data // Assuming response is { success: true, data: { ... } }
+          });
         } catch (err) {
           console.error("Failed to fetch profile", err);
           setUser({
