@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
           }
           // Clean the URL
           params.delete('token');
-          const cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+          let cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
           window.history.replaceState({}, document.title, cleanUrl);
         }
 
@@ -45,6 +45,15 @@ export const AuthProvider = ({ children }) => {
             id: profileRes.data.id || profileRes.data.data?.id,
             ...profileRes.data.data
           });
+          
+          // Check if we had a pending redirect
+          const pendingRedirect = sessionStorage.getItem('graxion_post_auth_redirect');
+          if (pendingRedirect) {
+            sessionStorage.removeItem('graxion_post_auth_redirect');
+            if (window.location.pathname + window.location.search !== pendingRedirect) {
+              window.location.href = pendingRedirect;
+            }
+          }
         } catch (err) {
           console.error("Failed to fetch profile (No valid session)", err);
           setUser(null);
@@ -84,6 +93,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     sessionStorage.setItem(REDIRECT_GUARD_KEY, Date.now().toString());
+    sessionStorage.setItem('graxion_post_auth_redirect', window.location.pathname + window.location.search);
     const currentUrl = encodeURIComponent(window.location.href);
     window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${currentUrl}&product=mail`;
   };
