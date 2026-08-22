@@ -13,6 +13,7 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('all'); // all, unread, needs_reply, starred, assigned
   
   // Pull to refresh state
   const [startY, setStartY] = useState(0);
@@ -23,7 +24,7 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
     if (activeOrg && activeMailbox) {
       fetchThreads();
     }
-  }, [activeOrg, activeMailbox, folder, labelId]);
+  }, [activeOrg, activeMailbox, folder, labelId, activeTab]);
 
   const fetchThreads = async (query = '') => {
     setLoading(true);
@@ -34,7 +35,8 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
           mailboxId: activeMailbox._id,
           folder: mode === 'search' || mode === 'label' ? undefined : folder,
           search: query || undefined,
-          labelId: mode === 'label' ? labelId : undefined
+          labelId: mode === 'label' ? labelId : undefined,
+          filter: activeTab !== 'all' ? activeTab : undefined
         }
       });
       setThreads(res.data?.data || []);
@@ -126,6 +128,30 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
           1-{threads.length > 0 ? threads.length : 0} of {threads.length > 0 ? threads.length : 0}
         </div>
       </div>
+
+      {mode === 'normal' && folder === 'inbox' && (
+        <div className="flex items-center gap-2 px-4 sm:px-6 py-2 border-b border-white/5 bg-bg sticky top-[56px] z-10 shrink-0 overflow-x-auto no-scrollbar shadow-sm">
+          {[
+            { id: 'all', label: 'All' },
+            { id: 'unread', label: 'Unread' },
+            { id: 'needs_reply', label: 'Needs Reply' },
+            { id: 'starred', label: 'Starred' },
+            { id: 'assigned', label: 'Assigned to Me' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-medium transition-all ${
+                activeTab === tab.id 
+                  ? 'bg-primary text-white shadow-md' 
+                  : 'text-secondary hover:text-main hover:bg-white/5 border border-white/5'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div 
         className="flex-1 overflow-y-auto px-2 sm:px-4 py-3 space-y-1"

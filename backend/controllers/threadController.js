@@ -10,7 +10,7 @@ export const listThreads = async (req, res) => {
   try {
     const {
       orgId, mailboxId, folder = 'inbox', category, labelId,
-      page = 1, limit = 50, starred, important,
+      page = 1, limit = 50, filter
     } = req.query;
 
     if (!orgId) {
@@ -18,7 +18,7 @@ export const listThreads = async (req, res) => {
     }
 
     const query = { organization: orgId };
-    if (folder) {
+    if (folder && !filter) {
       query.$or = [
         { folder: folder },
         { folders: folder }
@@ -27,12 +27,24 @@ export const listThreads = async (req, res) => {
     
     if (labelId) {
       query.labels = labelId;
-      delete query.$or; // Overwrite folder logic if searching by label, or keep both? Usually label view ignores folder.
+      delete query.$or;
       delete query.folder;
     }
 
     if (mailboxId) query.mailbox = mailboxId;
     if (category) query.category = category;
+
+    // Apply Filters
+    if (filter === 'unread') {
+      query.userFlags = { $not: { $elemMatch: { account: req.accountId, isRead: true } } };
+    } else if (filter === 'needs_reply') {
+      query.userFlags = { $elemMatch: { account: req.accountId, isRead: true } };
+      query.status = 'open';
+    } else if (filter === 'starred') {
+      query.userFlags = { $elemMatch: { account: req.accountId, isStarred: true } };
+    } else if (filter === 'assigned') {
+      query.assignedTo = req.accountId;
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
