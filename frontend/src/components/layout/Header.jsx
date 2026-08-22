@@ -19,7 +19,10 @@ export default function Header({ onMenuClick }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:5175';
+  const authUrl = import.meta.env.VITE_AUTH_URL || 'https://accounts.graxion.in';
+  const mailUrl = import.meta.env.VITE_MAIL_URL || 'https://mail.graxion.in';
+  const aiUrl = import.meta.env.VITE_AI_URL || 'https://ai.graxion.in';
+  const flowUrl = import.meta.env.VITE_FLOW_URL || 'https://flow.graxion.in';
 
   return (
     <header className="h-16 shrink-0 flex items-center justify-between px-6 border-b border-white/5 bg-bg">
@@ -88,19 +91,19 @@ export default function Header({ onMenuClick }) {
               <div className="py-4">
                 <h4 className="text-[12px] font-semibold text-secondary uppercase tracking-wider px-2 mb-3">Your Apps</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  <a href="http://localhost:5173" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl hover:bg-white/5 transition-colors gap-2">
+                  <a href={mailUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl hover:bg-white/5 transition-colors gap-2">
                     <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
                       <Mail size={20} />
                     </div>
                     <span className="text-[13px] text-main font-medium">Mail</span>
                   </a>
-                  <a href="http://localhost:5176" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl hover:bg-white/5 transition-colors gap-2">
+                  <a href={aiUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl hover:bg-white/5 transition-colors gap-2">
                     <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500">
                       <Sparkles size={20} />
                     </div>
                     <span className="text-[13px] text-main font-medium">Ai</span>
                   </a>
-                  <a href="http://localhost:5174" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl hover:bg-white/5 transition-colors gap-2">
+                  <a href={flowUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl hover:bg-white/5 transition-colors gap-2">
                     <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
                       <Workflow size={20} />
                     </div>
