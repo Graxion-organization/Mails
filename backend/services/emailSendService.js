@@ -49,7 +49,7 @@ export const sendEmail = async ({
   // Prepare attachment URLs for Resend
   const resendAttachments = attachments.map(att => ({
     filename: att.filename,
-    path: att.url, // Pre-signed R2 URL
+    path: att.url, // Cloudinary URL
   }));
 
   // If scheduled for later, just create the message record

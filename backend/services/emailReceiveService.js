@@ -176,7 +176,7 @@ export const processInboundEmail = async (payload) => {
       bodyHtml: html || '',
       bodyText: text || '',
       snippet: (text || '').substring(0, 200),
-      attachments: [], // Will be processed separately for R2 upload
+      attachments: [], // Will be processed separately for Cloudinary upload
       direction: 'inbound',
       status: 'delivered',
       spamAnalysis: spamResult,

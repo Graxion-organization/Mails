@@ -1,11 +1,9 @@
-import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { nanoid } from 'nanoid';
-import getR2Client, { R2_BUCKET } from '../config/r2.js';
+import cloudinary from '../config/cloudinary.js';
 import Attachment from '../models/Attachment.js';
 
 /**
- * @desc    Upload attachment to R2
+ * @desc    Upload attachment
  * @route   POST /api/mail/attachments/upload
  */
 export const uploadAttachment = async (req, res) => {
@@ -15,15 +13,22 @@ export const uploadAttachment = async (req, res) => {
     }
 
     const { orgId } = req.body;
-    const r2 = getR2Client();
-    const key = `attachments/${orgId}/${nanoid(16)}/${req.file.originalname}`;
-
-    await r2.send(new PutObjectCommand({
-      Bucket: R2_BUCKET,
-      Key: key,
-      Body: req.file.buffer,
-      ContentType: req.file.mimetype,
-    }));
+    
+    // Upload to Cloudinary using a stream
+    const uploadResult = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: `graxion_mail/attachments/${orgId}`,
+          resource_type: 'auto',
+          original_filename: req.file.originalname,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
 
     const attachment = await Attachment.create({
       organization: orgId,
@@ -31,8 +36,8 @@ export const uploadAttachment = async (req, res) => {
       filename: req.file.originalname,
       contentType: req.file.mimetype,
       size: req.file.size,
-      r2Bucket: R2_BUCKET,
-      r2Key: key,
+      public_id: uploadResult.public_id,
+      url: uploadResult.secure_url,
     });
 
     res.status(201).json({
@@ -42,7 +47,8 @@ export const uploadAttachment = async (req, res) => {
         filename: attachment.filename,
         contentType: attachment.contentType,
         size: attachment.size,
-        r2Key: attachment.r2Key,
+        public_id: attachment.public_id,
+        url: attachment.url,
       },
     });
   } catch (error) {
@@ -52,7 +58,7 @@ export const uploadAttachment = async (req, res) => {
 };
 
 /**
- * @desc    Download attachment (pre-signed URL)
+ * @desc    Download attachment (URL redirect)
  * @route   GET /api/mail/attachments/:attachmentId/download
  */
 export const downloadAttachment = async (req, res) => {
@@ -62,16 +68,11 @@ export const downloadAttachment = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Attachment not found' });
     }
 
-    const r2 = getR2Client();
-    const url = await getSignedUrl(r2, new GetObjectCommand({
-      Bucket: attachment.r2Bucket,
-      Key: attachment.r2Key,
-    }), { expiresIn: 3600 }); // 1 hour
-
-    res.json({ success: true, data: { url, filename: attachment.filename } });
+    // Cloudinary URLs are public, so we can just redirect or return the URL
+    res.json({ success: true, data: { url: attachment.url, filename: attachment.filename } });
   } catch (error) {
     console.error('Download error:', error);
-    res.status(500).json({ success: false, message: 'Error generating download URL' });
+    res.status(500).json({ success: false, message: 'Error getting download URL' });
   }
 };
 
@@ -86,11 +87,11 @@ export const deleteAttachment = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Attachment not found' });
     }
 
-    const r2 = getR2Client();
-    await r2.send(new DeleteObjectCommand({
-      Bucket: attachment.r2Bucket,
-      Key: attachment.r2Key,
-    }));
+    if (attachment.public_id) {
+      await cloudinary.uploader.destroy(attachment.public_id, { resource_type: 'raw' }).catch(err => console.error('Cloudinary deletion error:', err));
+      await cloudinary.uploader.destroy(attachment.public_id, { resource_type: 'image' }).catch(err => console.error('Cloudinary deletion error:', err));
+      await cloudinary.uploader.destroy(attachment.public_id, { resource_type: 'video' }).catch(err => console.error('Cloudinary deletion error:', err));
+    }
 
     attachment.status = 'deleted';
     await attachment.save();

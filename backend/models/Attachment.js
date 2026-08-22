@@ -30,12 +30,12 @@ const attachmentSchema = new mongoose.Schema({
     required: true,
   },
   
-  // R2 Storage
-  r2Bucket: {
+  // Cloudinary Storage
+  public_id: {
     type: String,
     required: true,
   },
-  r2Key: {
+  url: {
     type: String,
     required: true,
   },
@@ -55,7 +55,7 @@ const attachmentSchema = new mongoose.Schema({
 
 attachmentSchema.index({ message: 1 });
 attachmentSchema.index({ organization: 1, uploadedBy: 1 });
-attachmentSchema.index({ r2Key: 1 });
+attachmentSchema.index({ public_id: 1 });
 
 const Attachment = mongoose.model('Attachment', attachmentSchema);
 

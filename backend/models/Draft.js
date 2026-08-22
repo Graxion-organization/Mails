@@ -50,7 +50,8 @@ const draftSchema = new mongoose.Schema({
     filename: String,
     contentType: String,
     size: Number,
-    r2Key: String,
+    public_id: String,
+    url: String,
   }],
 
   // Scheduling
