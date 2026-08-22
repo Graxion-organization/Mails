@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 /**
  * @desc    Get current user profile (Proxied from Auth service)
  * @route   GET /api/user/me
@@ -9,19 +7,28 @@ export const getMe = async (req, res) => {
   try {
     const authUrl = process.env.GRAXION_AUTH_URL || 'http://localhost:6000';
     
-    // Forward the authorization header to the Auth service
-    const response = await axios.get(`${authUrl}/api/profile`, {
+    // Forward the authorization header to the Auth service using native fetch
+    const response = await fetch(`${authUrl}/api/profile`, {
       headers: {
         Authorization: req.headers.authorization
       }
     });
     
-    res.json(response.data);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return res.status(response.status).json({
+        success: false,
+        message: errorData.message || 'Error fetching profile from Auth service',
+      });
+    }
+
+    const data = await response.json();
+    res.json(data);
   } catch (error) {
     console.error('Error fetching profile from Auth service:', error.message);
-    res.status(error.response?.status || 500).json({
+    res.status(500).json({
       success: false,
-      message: error.response?.data?.message || 'Error fetching profile from Auth service',
+      message: 'Internal server error while fetching profile',
     });
   }
 };
