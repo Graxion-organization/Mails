@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { getIO } from '../sockets/socketHandler.js';
 import Message from '../models/Message.js';
 import Thread from '../models/Thread.js';
 import Mailbox from '../models/Mailbox.js';
@@ -206,6 +207,20 @@ export const processInboundEmail = async (payload) => {
             from: from.email,
           },
         });
+        
+        try {
+          const io = getIO();
+          io.to(`user:${member.account}`).emit('new_email', {
+             threadId: thread._id,
+             messageId: message._id,
+             from: from.name || from.email,
+             subject: subject || '(No Subject)',
+             snippet: message.snippet,
+             mailboxId: mailbox._id
+          });
+        } catch (err) {
+          console.error("Socket emit failed", err);
+        }
       }
     }
 

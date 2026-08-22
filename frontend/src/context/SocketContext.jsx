@@ -58,6 +58,16 @@ export const SocketProvider = ({ children }) => {
        // Optional: could toast if you're not in the thread, but mostly handled by ThreadView
     });
 
+    socketInstance.on('new_email', (data) => {
+      // Toast notification for the new email
+      toast.success(`New email from ${data.from}: ${data.subject}`, {
+        duration: 5000,
+        position: 'top-right',
+      });
+      // Trigger a custom event so Inbox.jsx can refresh
+      window.dispatchEvent(new CustomEvent('mail:refresh'));
+    });
+
     socketInstance.on('org_membership_updated', () => {
       toast.success('Your organization access has been updated!');
       // Force reload to update active orgs

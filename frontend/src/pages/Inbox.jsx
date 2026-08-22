@@ -28,6 +28,12 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
     }
   }, [activeOrg, activeMailbox, folder, labelId, activeTab]);
 
+  useEffect(() => {
+    const handleRefresh = () => fetchThreads();
+    window.addEventListener('mail:refresh', handleRefresh);
+    return () => window.removeEventListener('mail:refresh', handleRefresh);
+  }, [activeOrg, activeMailbox, folder, labelId, activeTab]);
+
   const fetchThreads = async (query = '') => {
     setLoading(true);
     try {
