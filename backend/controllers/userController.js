@@ -14,6 +14,16 @@ export const getMe = async (req, res) => {
       }
     });
     
+    const contentType = response.headers.get("content-type");
+    if (!contentType || contentType.indexOf("application/json") === -1) {
+      const text = await response.text();
+      console.error(`Expected JSON from ${authUrl}/api/profile but got:`, text.substring(0, 100));
+      return res.status(502).json({
+        success: false,
+        message: `Auth service returned an invalid response. Make sure GRAXION_AUTH_URL points to the Auth Backend API, not the frontend. Current URL: ${authUrl}`,
+      });
+    }
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return res.status(response.status).json({
