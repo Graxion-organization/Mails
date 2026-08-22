@@ -288,3 +288,99 @@ export const approveMember = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error approving member' });
   }
 };
+
+/**
+ * @desc    Toggle member status (suspend / activate)
+ * @route   PUT /api/orgs/:orgId/members/:memberId/status
+ */
+export const toggleMemberStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['active', 'suspended'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    const member = await Member.findOne({
+      _id: req.params.memberId,
+      organization: req.params.orgId,
+    });
+
+    if (!member) {
+      return res.status(404).json({ success: false, message: 'Member not found' });
+    }
+
+    if (member.role === 'owner' && status === 'suspended') {
+      return res.status(403).json({ success: false, message: 'Cannot suspend the organization owner' });
+    }
+
+    member.status = status;
+    await member.save();
+
+    await AuditLog.create({
+      organization: req.params.orgId,
+      account: req.accountId,
+      action: `member.${status}`,
+      target: { type: 'member', id: member._id.toString() },
+    });
+
+    res.json({ success: true, data: member, message: `Member ${status}` });
+  } catch (error) {
+    console.error('Toggle status error:', error);
+    res.status(500).json({ success: false, message: 'Error toggling member status' });
+  }
+};
+
+/**
+ * @desc    Update member mailbox access
+ * @route   PUT /api/orgs/:orgId/members/:memberId/mailboxes
+ */
+export const updateMemberMailboxes = async (req, res) => {
+  try {
+    const { mailboxIds } = req.body; // Array of mailbox ObjectIds
+
+    if (!Array.isArray(mailboxIds)) {
+      return res.status(400).json({ success: false, message: 'mailboxIds must be an array' });
+    }
+
+    const member = await Member.findOne({
+      _id: req.params.memberId,
+      organization: req.params.orgId,
+    });
+
+    if (!member) {
+      return res.status(404).json({ success: false, message: 'Member not found' });
+    }
+
+    // Since our original architecture relies on mailbox.members array
+    // We need to sync the member's account into the selected mailboxes
+
+    const { default: Mailbox } = await import('../models/Mailbox.js');
+
+    // First, remove this member from ALL mailboxes in the org
+    await Mailbox.updateMany(
+      { organization: req.params.orgId },
+      { $pull: { members: { account: member.account } } }
+    );
+
+    // Then, add them to the requested mailboxes
+    if (mailboxIds.length > 0) {
+      await Mailbox.updateMany(
+        { _id: { $in: mailboxIds }, organization: req.params.orgId },
+        { $push: { members: { account: member.account, role: 'agent' } } }
+      );
+    }
+
+    await AuditLog.create({
+      organization: req.params.orgId,
+      account: req.accountId,
+      action: 'member.mailboxes_updated',
+      target: { type: 'member', id: member._id.toString() },
+      metadata: { mailboxIds },
+    });
+
+    res.json({ success: true, message: 'Mailbox access updated' });
+  } catch (error) {
+    console.error('Update mailboxes error:', error);
+    res.status(500).json({ success: false, message: 'Error updating mailbox access' });
+  }
+};

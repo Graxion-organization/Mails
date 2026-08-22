@@ -259,6 +259,53 @@ export default function Settings() {
     }
   };
 
+  const handleToggleStatus = async (member) => {
+    const newStatus = member.status === 'suspended' ? 'active' : 'suspended';
+    try {
+      setLoading(true);
+      const res = await api.put(`/orgs/${activeOrg._id}/members/${member._id}/status`, { status: newStatus });
+      if (res.data.success) {
+        toast.success(`Member ${newStatus}`);
+        loadMembers();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [showMailboxAccessModal, setShowMailboxAccessModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [memberMailboxes, setMemberMailboxes] = useState([]);
+
+  const openMailboxAccessModal = (member) => {
+    setSelectedMember(member);
+    const activeMailboxIds = mailboxes
+      .filter(m => m.members?.some(x => x.account === member.account))
+      .map(m => m._id);
+    setMemberMailboxes(activeMailboxIds);
+    setShowMailboxAccessModal(true);
+  };
+
+  const handleSaveMailboxAccess = async () => {
+    try {
+      setLoading(true);
+      const res = await api.put(`/orgs/${activeOrg._id}/members/${selectedMember._id}/mailboxes`, {
+        mailboxIds: memberMailboxes
+      });
+      if (res.data.success) {
+        toast.success('Mailbox access updated');
+        setShowMailboxAccessModal(false);
+        fetchMailboxes(activeOrg._id);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update access');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!activeOrg) return null;
 
   return (
@@ -534,6 +581,7 @@ export default function Settings() {
                           <strong>{member.account?.name || member.invitedEmail || member.email}</strong>
                           {member.status === 'invited' && <span className="status-badge pending">Invited</span>}
                           {member.status === 'pending_approval' && <span className="status-badge warning" style={{ backgroundColor: '#f59e0b20', color: '#f59e0b', border: '1px solid #f59e0b40' }}>Needs Approval</span>}
+                          {member.status === 'suspended' && <span className="status-badge danger" style={{ backgroundColor: '#ef444420', color: '#ef4444', border: '1px solid #ef444440' }}>Suspended</span>}
                         </div>
                         <span className="text-secondary sub-text">{member.invitedEmail || member.email}</span>
                       </div>
@@ -548,15 +596,33 @@ export default function Settings() {
                             Approve
                           </button>
                         )}
+                        <button 
+                          className="btn-primary" 
+                          style={{ padding: '4px 12px', minHeight: '32px', fontSize: '13px' }}
+                          onClick={() => openMailboxAccessModal(member)}
+                          disabled={loading || member.status !== 'active'}
+                        >
+                          Manage Access
+                        </button>
                         <select 
                           value={member.role}
                           onChange={(e) => handleUpdateRole(member._id, e.target.value)}
-                          className="role-select"
+                          className="role-select ml-2"
                         >
                           <option value="owner" disabled>Owner</option>
                           <option value="admin">Admin</option>
                           <option value="member">Member</option>
                         </select>
+                        {member.role !== 'owner' && (
+                          <button
+                            className="btn-secondary ml-2"
+                            style={{ padding: '4px 12px', minHeight: '32px', fontSize: '13px' }}
+                            onClick={() => handleToggleStatus(member)}
+                            disabled={loading || ['invited', 'pending_approval'].includes(member.status)}
+                          >
+                            {member.status === 'suspended' ? 'Activate' : 'Suspend'}
+                          </button>
+                        )}
                         <button 
                           className="btn-icon text-red-400 hover:text-red-300 hover:bg-red-400/10 ml-2"
                           onClick={() => handleRemoveMember(member._id)}
@@ -803,11 +869,53 @@ export default function Settings() {
                   onChange={e => setNewMailbox({...newMailbox, displayName: e.target.value})}
                 />
               </div>
-              <div className="modal-actions">
-                <button type="button" className="btn-ghost" onClick={() => setShowMailboxModal(false)}>Cancel</button>
+              <div className="form-actions">
+                <button type="button" className="btn-secondary" onClick={() => setShowMailboxModal(false)}>Cancel</button>
                 <button type="submit" className="btn-primary" disabled={loading}>Create</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showMailboxAccessModal && selectedMember && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <h3>Manage Mailbox Access</h3>
+            <p className="text-secondary text-sm mb-4">Select the mailboxes {selectedMember.account?.name || selectedMember.invitedEmail} can access.</p>
+            
+            <div className="list-container mb-4" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {mailboxes.map(m => (
+                <div key={m._id} className="list-item" style={{ padding: '8px 12px' }}>
+                  <label className="flex items-center gap-3 w-full cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={memberMailboxes.includes(m._id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setMemberMailboxes([...memberMailboxes, m._id]);
+                        } else {
+                          setMemberMailboxes(memberMailboxes.filter(id => id !== m._id));
+                        }
+                      }}
+                      className="form-checkbox"
+                    />
+                    <div className="flex flex-col">
+                      <strong className="text-sm">{m.address}</strong>
+                      <span className="text-xs text-secondary">{m.displayName}</span>
+                    </div>
+                  </label>
+                </div>
+              ))}
+              {mailboxes.length === 0 && <div className="text-secondary text-sm">No mailboxes available.</div>}
+            </div>
+
+            <div className="form-actions">
+              <button type="button" className="btn-secondary" onClick={() => setShowMailboxAccessModal(false)}>Cancel</button>
+              <button type="button" className="btn-primary" onClick={handleSaveMailboxAccess} disabled={loading}>
+                {loading ? <Loader2 className="animate-spin" size={16} /> : 'Save Access'}
+              </button>
+            </div>
           </div>
         </div>
       )}

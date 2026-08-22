@@ -142,6 +142,38 @@ export const sendEmail = async ({
         thread.participants.push({ email, name: recipient.name || '' });
       }
     }
+
+    // Auto-Labeling: Tag thread with the agent who replied
+    const { default: Member } = await import('../models/Member.js');
+    const { default: Label } = await import('../models/Label.js');
+
+    const member = await Member.findOne({ organization: organizationId, account: accountId });
+    if (member) {
+      // Prefer invitedEmail for display if we don't have a name
+      const displayName = member.invitedEmail || 'Agent';
+      const labelName = `Replied by: ${displayName}`;
+
+      let label = await Label.findOne({
+        organization: organizationId,
+        name: labelName,
+      });
+
+      if (!label) {
+        label = await Label.create({
+          organization: organizationId,
+          name: labelName,
+          color: '#8b5cf6', // Default distinct color
+          type: 'system',
+          scope: 'org'
+        });
+      }
+
+      if (!thread.labels) thread.labels = [];
+      if (!thread.labels.includes(label._id)) {
+        thread.labels.push(label._id);
+      }
+    }
+
     await thread.save();
   }
 

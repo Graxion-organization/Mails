@@ -104,7 +104,7 @@ export const listMailboxes = async (req, res) => {
     if (!['owner', 'admin'].includes(req.member?.role)) {
       query['members.account'] = req.accountId;
     }
-
+    
     const mailboxes = await Mailbox.find(query)
       .populate('domain', 'domain status')
       .sort({ type: 1, address: 1 });
