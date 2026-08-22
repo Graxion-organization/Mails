@@ -166,17 +166,21 @@ function App() {
         <SocketProvider>
           <div className="app-container relative">
             <LockScreen isLocked={isLocked} onUnlock={() => setIsLocked(false)} />
-            <AppRoutes />
-            <Toaster 
-              position="bottom-right"
-              toastOptions={{
-                style: {
-                  background: '#18181b',
-                  color: '#fff',
-                  border: '1px solid #27272a',
-                },
-              }}
-            />
+            {!isLocked && (
+              <>
+                <AppRoutes />
+                <Toaster 
+                  position="bottom-right"
+                  toastOptions={{
+                    style: {
+                      background: '#18181b',
+                      color: '#fff',
+                      border: '1px solid #27272a',
+                    },
+                  }}
+                />
+              </>
+            )}
           </div>
         </SocketProvider>
       </MailProvider>
