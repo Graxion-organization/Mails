@@ -222,11 +222,6 @@ export default function Settings() {
 
   return (
     <div className="settings-container">
-      <div className="settings-header">
-        <h1>Settings</h1>
-        <p>Manage your organization's domains, mailboxes, and team members.</p>
-      </div>
-
       <div className="settings-layout">
         <div className="settings-sidebar">
           <div className="sidebar-group">
@@ -255,6 +250,11 @@ export default function Settings() {
         </div>
 
         <div className="settings-content">
+          <div className="settings-header">
+            <h1>Settings</h1>
+            <p>Manage your organization's domains, mailboxes, and team members.</p>
+          </div>
+
           {/* GENERAL TAB */}
           {activeTab === 'general' && (
             <div className="settings-section animate-fade-in">
