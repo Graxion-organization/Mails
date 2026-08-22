@@ -4,6 +4,7 @@ import { useMail } from '../context/MailContext';
 import api from '../utils/api';
 import { formatDistanceToNow } from 'date-fns';
 import { Star, Archive, Trash2, User, Search, PenSquare } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
   const { activeOrg, activeMailbox, openComposer, labels } = useMail();
@@ -14,6 +15,7 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all'); // all, unread, needs_reply, starred, assigned
+  const [selectedThreads, setSelectedThreads] = useState(new Set());
   
   // Pull to refresh state
   const [startY, setStartY] = useState(0);
@@ -29,17 +31,34 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
   const fetchThreads = async (query = '') => {
     setLoading(true);
     try {
-      const res = await api.get('/mail/threads', {
-        params: {
-          orgId: activeOrg._id,
-          mailboxId: activeMailbox._id,
-          folder: mode === 'search' || mode === 'label' ? undefined : folder,
-          search: query || undefined,
-          labelId: mode === 'label' ? labelId : undefined,
-          filter: activeTab !== 'all' ? activeTab : undefined
-        }
-      });
-      setThreads(res.data?.data || []);
+      if (folder === 'drafts') {
+        const res = await api.get('/mail/drafts', {
+          params: { orgId: activeOrg._id }
+        });
+        const formattedDrafts = (res.data?.data || []).map(draft => ({
+          _id: draft._id,
+          subject: draft.subject || '(No Subject)',
+          snippet: draft.bodyText?.substring(0, 100) || '',
+          participants: draft.to || [],
+          updatedAt: draft.updatedAt,
+          readBy: [{ account: activeMailbox._id }], // Mock as read
+          isDraft: true,
+          originalDraft: draft
+        }));
+        setThreads(formattedDrafts);
+      } else {
+        const res = await api.get('/mail/threads', {
+          params: {
+            orgId: activeOrg._id,
+            mailboxId: activeMailbox._id,
+            folder: mode === 'search' || mode === 'label' ? undefined : folder,
+            search: query || undefined,
+            labelId: mode === 'label' ? labelId : undefined,
+            filter: activeTab !== 'all' ? activeTab : undefined
+          }
+        });
+        setThreads(res.data?.data || []);
+      }
     } catch (error) {
       console.error('Failed to fetch threads', error);
     } finally {
@@ -98,19 +117,77 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
     setStartY(0);
   };
 
+  const handleBatchAction = async (action) => {
+    if (selectedThreads.size === 0) return;
+    try {
+      if (folder === 'drafts' && action === 'trash') {
+        // Drafts use a different delete API
+        for (const threadId of selectedThreads) {
+          await api.delete(`/mail/drafts/${threadId}`);
+        }
+      } else {
+        await api.post('/mail/threads/batch', {
+          threadIds: Array.from(selectedThreads),
+          action
+        });
+      }
+      toast.success(`Items ${action === 'archive' ? 'archived' : 'deleted'}`);
+      setSelectedThreads(new Set());
+      fetchThreads();
+    } catch (error) {
+      console.error(error);
+      toast.error(`Failed to ${action} items`);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-bg relative overflow-hidden">
       <div className="flex items-center justify-between px-4 sm:px-6 py-2 border-b border-white/5 bg-surface sticky top-0 z-10 shrink-0 min-h-[56px]">
         <div className="flex items-center gap-1 sm:gap-2">
-          <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5 text-secondary hover:text-main transition-colors group">
-            <div className="w-4 h-4 border border-secondary group-hover:border-main rounded-sm"></div>
+          <button 
+            className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5 text-secondary hover:text-main transition-colors group"
+            onClick={() => {
+              if (selectedThreads.size === threads.length && threads.length > 0) {
+                setSelectedThreads(new Set());
+              } else {
+                setSelectedThreads(new Set(threads.map(t => t._id)));
+              }
+            }}
+          >
+            <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${selectedThreads.size > 0 ? 'bg-primary border-primary' : 'border-secondary group-hover:border-main'}`}>
+              {selectedThreads.size > 0 && <span className="w-2 h-2 bg-white rounded-sm"></span>}
+            </div>
           </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5 text-secondary hover:text-main transition-colors">
-            <Archive size={18} />
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-danger/10 text-secondary hover:text-danger transition-colors">
-            <Trash2 size={18} />
-          </button>
+          
+          {selectedThreads.size > 0 ? (
+            <>
+              {folder !== 'drafts' && (
+                <button 
+                  className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5 text-secondary hover:text-main transition-colors"
+                  onClick={() => handleBatchAction('archive')}
+                  title="Archive selected"
+                >
+                  <Archive size={18} />
+                </button>
+              )}
+              <button 
+                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-danger/10 text-secondary hover:text-danger transition-colors"
+                onClick={() => handleBatchAction('trash')}
+                title="Delete selected"
+              >
+                <Trash2 size={18} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="w-10 h-10 flex items-center justify-center rounded-lg text-secondary/30 cursor-not-allowed">
+                <Archive size={18} />
+              </button>
+              <button className="w-10 h-10 flex items-center justify-center rounded-lg text-secondary/30 cursor-not-allowed">
+                <Trash2 size={18} />
+              </button>
+            </>
+          )}
           
           {mode === 'search' && (
             <form onSubmit={handleSearch} className="flex items-center ml-2 bg-bg border border-white/10 rounded-lg px-3 py-1.5 focus-within:border-primary transition-colors">
@@ -192,9 +269,10 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
                   if (folder === 'drafts') {
                     openComposer({
                       type: 'draft',
+                      draftId: thread._id,
                       to: thread.participants?.map(p => p.email).join(', ') || '',
                       subject: thread.subject || '',
-                      body: thread.snippet || '' // Assuming full body isn't in snippet but best we have from thread list
+                      body: thread.originalDraft?.bodyHtml || ''
                     });
                   } else {
                     navigate(`/thread/${thread._id}`);
@@ -202,8 +280,19 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
                 }}
               >
                 <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
-                  <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-secondary transition-colors group hidden sm:flex">
-                    <div className="w-4 h-4 border border-secondary group-hover:border-main rounded-sm"></div>
+                  <button 
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors hidden sm:flex"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const next = new Set(selectedThreads);
+                      if (next.has(thread._id)) next.delete(thread._id);
+                      else next.add(thread._id);
+                      setSelectedThreads(next);
+                    }}
+                  >
+                    <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${selectedThreads.has(thread._id) ? 'bg-primary border-primary' : 'border-secondary hover:border-main'}`}>
+                      {selectedThreads.has(thread._id) && <span className="w-2 h-2 bg-white rounded-sm"></span>}
+                    </div>
                   </button>
                   <button 
                     className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors" 

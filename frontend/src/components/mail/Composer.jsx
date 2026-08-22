@@ -16,7 +16,7 @@ export default function Composer() {
   const [body, setBody] = useState(composerInitialData?.body || '');
   const [attachments, setAttachments] = useState([]);
   const [isSending, setIsSending] = useState(false);
-  const [draftId, setDraftId] = useState(null);
+  const [draftId, setDraftId] = useState(composerInitialData?.draftId || null);
   const [scheduledAt, setScheduledAt] = useState('');
   const [showScheduleInput, setShowScheduleInput] = useState(false);
   const fileInputRef = useRef(null);

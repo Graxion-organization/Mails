@@ -139,6 +139,17 @@ export default function ThreadView() {
     }
   };
 
+  const handleMoveThread = async (folder) => {
+    try {
+      await api.put(`/mail/threads/${threadId}/move`, { folder });
+      toast.success(`Thread moved to ${folder}`);
+      navigate('/');
+    } catch (error) {
+      console.error(error);
+      toast.error(`Failed to move thread to ${folder}`);
+    }
+  };
+
   const handleFileChange = (e) => {
     if (e.target.files) {
       setAttachments([...attachments, ...Array.from(e.target.files)]);
@@ -224,8 +235,8 @@ export default function ThreadView() {
 
           <div className="w-px h-6 bg-border mx-1"></div>
           
-          <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors" title="Archive"><Archive size={16} /></button>
-          <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors" title="Delete"><Trash2 size={16} /></button>
+          <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors" title="Archive" onClick={() => handleMoveThread('archive')}><Archive size={16} /></button>
+          <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors" title="Delete" onClick={() => handleMoveThread('trash')}><Trash2 size={16} /></button>
           <div className="relative">
             <button 
               className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors" 
