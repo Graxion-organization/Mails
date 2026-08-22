@@ -7,7 +7,7 @@ import {
 import { useState } from 'react';
 
 export default function Sidebar({ isOpen, onClose }) {
-  const { mailboxes, activeMailbox, setActiveMailbox, openComposer, stats } = useMail();
+  const { mailboxes, activeMailbox, setActiveMailbox, openComposer, stats, labels } = useMail();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const navItems = [
@@ -113,6 +113,29 @@ export default function Sidebar({ isOpen, onClose }) {
             )}
           </NavLink>
         ))}
+
+        {/* Labels Section */}
+        {labels && labels.length > 0 && (
+          <div className="pt-4 pb-1">
+            <div className="px-3 text-[11px] font-bold text-secondary uppercase tracking-wider mb-2">
+              Labels
+            </div>
+            {labels.map(label => (
+              <NavLink 
+                key={label._id} 
+                to={`/label/${label._id}`}
+                onClick={onClose}
+                className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-[14px] font-medium ${isActive ? 'bg-white/5 text-main' : 'text-secondary hover:bg-white/5 hover:text-main'}`}
+              >
+                <div 
+                  className="w-2.5 h-2.5 rounded-full" 
+                  style={{ backgroundColor: label.color || '#8b5cf6' }}
+                />
+                <span className="truncate">{label.name}</span>
+              </NavLink>
+            ))}
+          </div>
+        )}
       </nav>
       
       {/* Settings */}

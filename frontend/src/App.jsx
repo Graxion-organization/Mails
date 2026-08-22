@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -12,6 +13,7 @@ import Inbox from './pages/Inbox';
 import ThreadView from './pages/ThreadView';
 import Settings from './pages/Settings';
 import Onboarding from './pages/Onboarding';
+import LockScreen from './components/mail/LockScreen';
 
 function RequireAuth({ children }) {
   const { user, isLoading: authLoading, authError, redirectToAuth } = useAuth();
@@ -123,6 +125,7 @@ function AppRoutes() {
         <Route path="/spam" element={<Inbox folder="spam" />} />
         <Route path="/trash" element={<Inbox folder="trash" />} />
         <Route path="/search" element={<Inbox mode="search" />} />
+        <Route path="/label/:labelId" element={<Inbox mode="label" />} />
         
         <Route path="/thread/:threadId" element={<ThreadView />} />
         
@@ -136,11 +139,33 @@ function AppRoutes() {
 }
 
 function App() {
+  const [isLocked, setIsLocked] = useState(false);
+
+  useEffect(() => {
+    // Check initial lock state
+    const lockEnabled = localStorage.getItem('graxion_mail_lock_enabled') === 'true';
+    if (lockEnabled) {
+      setIsLocked(true);
+    }
+
+    // Optional: auto-lock on blur or visibility change could be added here
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && localStorage.getItem('graxion_mail_lock_enabled') === 'true') {
+        // We could lock it immediately or after a delay
+        setIsLocked(true);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   return (
     <AuthProvider>
       <MailProvider>
         <SocketProvider>
-          <div className="app-container">
+          <div className="app-container relative">
+            <LockScreen isLocked={isLocked} onUnlock={() => setIsLocked(false)} />
             <AppRoutes />
             <Toaster 
               position="bottom-right"

@@ -6,8 +6,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { Star, Archive, Trash2, User, Search, PenSquare } from 'lucide-react';
 
 export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
-  const { activeOrg, activeMailbox, openComposer } = useMail();
+  const { activeOrg, activeMailbox, openComposer, labels } = useMail();
   const navigate = useNavigate();
+  const { labelId } = useParams();
   
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +23,7 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
     if (activeOrg && activeMailbox) {
       fetchThreads();
     }
-  }, [activeOrg, activeMailbox, folder]);
+  }, [activeOrg, activeMailbox, folder, labelId]);
 
   const fetchThreads = async (query = '') => {
     setLoading(true);
@@ -31,8 +32,9 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
         params: {
           orgId: activeOrg._id,
           mailboxId: activeMailbox._id,
-          folder: mode === 'search' ? undefined : folder,
+          folder: mode === 'search' || mode === 'label' ? undefined : folder,
           search: query || undefined,
+          labelId: mode === 'label' ? labelId : undefined
         }
       });
       setThreads(res.data?.data || []);
@@ -218,6 +220,22 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
                     <span className={`truncate text-[14px] ${isUnread ? 'font-semibold text-main' : 'text-main/90'}`}>
                       {thread.subject || '(No Subject)'}
                     </span>
+                    
+                    {/* Render Labels */}
+                    {thread.labels?.map(labelObjOrId => {
+                      const labelId = typeof labelObjOrId === 'string' ? labelObjOrId : labelObjOrId._id;
+                      const label = labels?.find(l => l._id === labelId);
+                      if (!label) return null;
+                      return (
+                        <span 
+                          key={label._id}
+                          className="px-2 py-0.5 rounded-md text-[10px] font-medium shrink-0 whitespace-nowrap hidden sm:inline-block"
+                          style={{ backgroundColor: `${label.color}20`, color: label.color }}
+                        >
+                          {label.name}
+                        </span>
+                      );
+                    })}
                     <span className="truncate text-[14px] text-secondary hidden sm:inline">
                       <span className="mx-1 opacity-50">-</span>
                       {thread.snippet || 'No content...'}

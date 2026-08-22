@@ -27,15 +27,41 @@ export const MailProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
+      // Reset state in case user changed in the same session without reload
+      setOrgs([]);
+      setActiveOrg(null);
+      setMailboxes([]);
+      setActiveMailbox(null);
+      setLabels([]);
       fetchOrgs();
     } else {
+      setOrgs([]);
+      setActiveOrg(null);
+      setMailboxes([]);
+      setActiveMailbox(null);
+      setLabels([]);
       setIsLoading(false);
     }
   }, [user]);
 
+  // Labels state
+  const [labels, setLabels] = useState([]);
+
+  const fetchLabels = async (orgId) => {
+    try {
+      const res = await api.get(`/mail/labels?orgId=${orgId}`);
+      if (res.data.success) {
+        setLabels(res.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch labels', error);
+    }
+  };
+
   useEffect(() => {
     if (activeOrg) {
       fetchMailboxes(activeOrg._id);
+      fetchLabels(activeOrg._id);
     }
   }, [activeOrg]);
 
@@ -91,6 +117,9 @@ export const MailProvider = ({ children }) => {
       mailboxes,
       activeMailbox,
       setActiveMailbox,
+      labels,
+      setLabels,
+      fetchLabels,
       isComposerOpen,
       openComposer,
       closeComposer,

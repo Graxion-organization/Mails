@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMail } from '../context/MailContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { Settings as SettingsIcon, Globe, Mail, Users, Building, Plus, Trash2, Loader2, CheckCircle2, Copy, Info } from 'lucide-react';
+import { Settings as SettingsIcon, Globe, Mail, Users, Building, Plus, Trash2, Loader2, CheckCircle2, Copy, Info, Tag, Lock } from 'lucide-react';
 import './Settings.css';
 
 export default function Settings() {
@@ -13,11 +13,21 @@ export default function Settings() {
   // Data states
   const [domains, setDomains] = useState([]);
   const [members, setMembers] = useState([]);
+  
+  // App Lock state
+  const [pin, setPin] = useState('');
+  const [isLockEnabled, setIsLockEnabled] = useState(localStorage.getItem('graxion_mail_lock_enabled') === 'true');
+
+  // Labels state inside Settings
+  const { labels, fetchLabels } = useMail();
+  const [newLabelName, setNewLabelName] = useState('');
+  const [newLabelColor, setNewLabelColor] = useState('#8b5cf6');
 
   useEffect(() => {
     if (activeOrg) {
       if (activeTab === 'domains') loadDomains();
       if (activeTab === 'members') loadMembers();
+      if (activeTab === 'labels') fetchLabels(activeOrg._id);
     }
   }, [activeOrg, activeTab]);
 
@@ -239,12 +249,22 @@ export default function Settings() {
             <button className={`nav-btn ${activeTab === 'mailboxes' ? 'active' : ''}`} onClick={() => setActiveTab('mailboxes')}>
               <Mail size={16} /> Mailboxes
             </button>
+            <button className={`nav-btn ${activeTab === 'labels' ? 'active' : ''}`} onClick={() => setActiveTab('labels')}>
+              <Tag size={16} /> Labels
+            </button>
           </div>
           
           <div className="sidebar-group">
             <span className="group-label">TEAM</span>
             <button className={`nav-btn ${activeTab === 'members' ? 'active' : ''}`} onClick={() => setActiveTab('members')}>
               <Users size={16} /> Members
+            </button>
+          </div>
+
+          <div className="sidebar-group">
+            <span className="group-label">SECURITY</span>
+            <button className={`nav-btn ${activeTab === 'security' ? 'active' : ''}`} onClick={() => setActiveTab('security')}>
+              <Lock size={16} /> App Lock
             </button>
           </div>
         </div>
@@ -452,54 +472,239 @@ export default function Settings() {
             <div className="settings-section animate-fade-in">
               <div className="section-header-flex">
                 <h2>Team Members</h2>
-              </div>
-              
-              <div className="settings-card">
-                <form onSubmit={handleInviteMember} className="add-inline-form">
-                  <input 
-                    type="email" 
-                    placeholder="colleague@company.com" 
-                    value={inviteEmail} 
-                    onChange={e => setInviteEmail(e.target.value)} 
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="Email address"
+                    className="form-input flex-1 sm:w-64"
                   />
-                  <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className="role-select">
-                    <option value="admin">Admin</option>
-                    <option value="manager">Manager</option>
-                    <option value="support_agent">Support Agent</option>
+                  <select 
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value)}
+                    className="form-input w-24 sm:w-32"
+                  >
                     <option value="member">Member</option>
+                    <option value="admin">Admin</option>
                   </select>
-                  <button type="submit" className="btn-secondary" disabled={loading || !inviteEmail}>
-                    Invite
+                  <button className="btn-primary" onClick={handleInviteMember} disabled={loading || !inviteEmail}>
+                    {loading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
+                    <span className="hidden sm:inline">Invite</span>
                   </button>
-                </form>
-                
-                <div className="list-container">
-                  {members.map(m => (
-                    <div key={m._id} className="list-item">
-                      <div className="item-info">
-                        <strong>{m.invitedEmail}</strong>
-                        <span className={`status-badge ${m.status === 'active' ? 'success' : 'pending'}`}>
-                          {m.status}
-                        </span>
+                </div>
+              </div>
+              <div className="settings-card no-padding">
+                <div className="data-table">
+                  {members.map(member => (
+                    <div key={member._id} className="table-row">
+                      <div className="col-info">
+                        <strong>{member.account?.name || member.email}</strong>
+                        <span className="text-secondary">{member.email}</span>
                       </div>
-                      <div className="item-actions">
+                      <div className="col-action">
                         <select 
-                          className="role-badge" 
-                          style={{border: 'none', outline: 'none', cursor: 'pointer', appearance: 'auto'}}
-                          value={m.role}
-                          onChange={(e) => handleUpdateRole(m._id, e.target.value)}
+                          value={member.role}
+                          onChange={(e) => handleUpdateRole(member._id, e.target.value)}
+                          className="role-select"
                         >
+                          <option value="owner" disabled>Owner</option>
                           <option value="admin">Admin</option>
-                          <option value="manager">Manager</option>
-                          <option value="support_agent">Support Agent</option>
                           <option value="member">Member</option>
                         </select>
-                        <button className="btn-icon text-red"><Trash2 size={16} /></button>
                       </div>
                     </div>
                   ))}
                   {members.length === 0 && <div className="empty-state">No members found.</div>}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* LABELS TAB */}
+          {activeTab === 'labels' && (
+            <div className="settings-section animate-fade-in">
+              <div className="section-header-flex">
+                <h2>Custom Labels</h2>
+              </div>
+              
+              <div className="settings-card mb-6">
+                <h3 className="mb-4 text-[14px] font-medium">Create New Label</h3>
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                  <input
+                    type="text"
+                    value={newLabelName}
+                    onChange={(e) => setNewLabelName(e.target.value)}
+                    placeholder="Label Name (e.g. Invoices)"
+                    className="form-input flex-1"
+                  />
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="color" 
+                      value={newLabelColor}
+                      onChange={(e) => setNewLabelColor(e.target.value)}
+                      className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+                    />
+                    <button 
+                      className="btn-primary" 
+                      onClick={async () => {
+                        if (!newLabelName) return;
+                        try {
+                          const res = await api.post('/mail/labels', {
+                            orgId: activeOrg._id,
+                            name: newLabelName,
+                            color: newLabelColor
+                          });
+                          if (res.data.success) {
+                            toast.success('Label created');
+                            setNewLabelName('');
+                            fetchLabels(activeOrg._id);
+                          }
+                        } catch (error) {
+                          toast.error('Error creating label');
+                        }
+                      }}
+                    >
+                      <Plus size={16} /> Create
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="settings-card no-padding">
+                <div className="data-table">
+                  {labels.map(label => (
+                    <div key={label._id} className="table-row">
+                      <div className="col-info flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: label.color }} />
+                        <strong>{label.name}</strong>
+                      </div>
+                      <div className="col-action">
+                        <button 
+                          className="btn-icon text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                          onClick={async () => {
+                            if (window.confirm('Delete this label?')) {
+                              try {
+                                await api.delete(`/mail/labels/${label._id}?orgId=${activeOrg._id}`);
+                                toast.success('Label deleted');
+                                fetchLabels(activeOrg._id);
+                              } catch(error) {
+                                toast.error('Error deleting label');
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {labels.length === 0 && (
+                    <div className="p-6 text-center text-secondary text-sm">
+                      No custom labels created yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECURITY TAB */}
+          {activeTab === 'security' && (
+            <div className="settings-section animate-fade-in">
+              <h2>App Lock (Local Device)</h2>
+              <div className="settings-card">
+                <p className="text-secondary text-sm mb-6">
+                  Secure your Graxion Mail application on this device. You will need to enter a PIN or use your fingerprint to access your emails.
+                </p>
+
+                {!isLockEnabled ? (
+                  <div className="flex flex-col gap-4 max-w-sm">
+                    <label className="text-sm font-medium">Set a 4-6 digit PIN</label>
+                    <input 
+                      type="password"
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value)}
+                      className="form-input text-center tracking-widest text-lg"
+                      placeholder="••••"
+                      maxLength={6}
+                    />
+                    <button 
+                      className="btn-primary justify-center"
+                      disabled={pin.length < 4}
+                      onClick={() => {
+                        localStorage.setItem('graxion_mail_pin', pin);
+                        localStorage.setItem('graxion_mail_lock_enabled', 'true');
+                        setIsLockEnabled(true);
+                        setPin('');
+                        toast.success('App Lock enabled with PIN');
+                      }}
+                    >
+                      <Lock size={16} /> Enable App Lock
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center gap-3 text-green-400 bg-green-400/10 p-4 rounded-xl">
+                      <Lock size={20} />
+                      <span className="font-medium">App Lock is currently enabled</span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <button 
+                        className="btn-secondary"
+                        onClick={async () => {
+                          try {
+                            if (!window.PublicKeyCredential) {
+                              toast.error('WebAuthn not supported on this browser');
+                              return;
+                            }
+                            const challenge = new Uint8Array(32);
+                            window.crypto.getRandomValues(challenge);
+                            const credential = await navigator.credentials.create({
+                              publicKey: {
+                                challenge,
+                                rp: { name: 'Graxion Mail' },
+                                user: {
+                                  id: new Uint8Array(16),
+                                  name: activeOrg.name,
+                                  displayName: 'Graxion User'
+                                },
+                                pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+                                authenticatorSelection: { userVerification: 'required' },
+                              }
+                            });
+                            if (credential) {
+                              const rawId = Array.from(new Uint8Array(credential.rawId));
+                              localStorage.setItem('graxion_biometric_id', JSON.stringify(rawId));
+                              toast.success('Biometric unlock enabled!');
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            toast.error('Failed to register biometrics');
+                          }
+                        }}
+                      >
+                        Setup Fingerprint/Biometrics
+                      </button>
+
+                      <button 
+                        className="btn-secondary text-red-400 hover:text-red-300 border-red-400/20"
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to disable the App Lock?')) {
+                            localStorage.removeItem('graxion_mail_pin');
+                            localStorage.removeItem('graxion_mail_lock_enabled');
+                            localStorage.removeItem('graxion_biometric_id');
+                            setIsLockEnabled(false);
+                            toast.success('App Lock disabled');
+                          }
+                        }}
+                      >
+                        Disable App Lock
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

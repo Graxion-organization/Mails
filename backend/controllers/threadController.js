@@ -9,7 +9,7 @@ import Mailbox from '../models/Mailbox.js';
 export const listThreads = async (req, res) => {
   try {
     const {
-      orgId, mailboxId, folder = 'inbox', category,
+      orgId, mailboxId, folder = 'inbox', category, labelId,
       page = 1, limit = 50, starred, important,
     } = req.query;
 
@@ -23,6 +23,12 @@ export const listThreads = async (req, res) => {
         { folder: folder },
         { folders: folder }
       ];
+    }
+    
+    if (labelId) {
+      query.labels = labelId;
+      delete query.$or; // Overwrite folder logic if searching by label, or keep both? Usually label view ignores folder.
+      delete query.folder;
     }
 
     if (mailboxId) query.mailbox = mailboxId;

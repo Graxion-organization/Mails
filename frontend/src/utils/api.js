@@ -11,28 +11,22 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor — attach Bearer token from localStorage
+// Request interceptor — can be used for other headers if needed in the future
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('graxion_access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor — handle errors WITHOUT auto-redirecting on 401
-// The redirect-to-auth logic is now exclusively handled by RequireAuth in App.jsx
-// This prevents the infinite redirect loop that was happening before
+// Response interceptor — handle errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear the stale token so AuthContext/RequireAuth can detect unauthenticated state
-      localStorage.removeItem('graxion_access_token');
-      // Do NOT redirect here — let React handle it via state
+      // Session expired or invalid cookie
+      const authUrl = import.meta.env.VITE_AUTH_URL || 'https://accounts.graxion.in';
+      window.location.href = `${authUrl}/login?redirect_to=${encodeURIComponent(window.location.origin)}&product=mail`;
     } else {
       const message = error.response?.data?.message || 'An error occurred';
       toast.error(message);

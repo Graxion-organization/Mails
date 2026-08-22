@@ -12,7 +12,7 @@ export default function ThreadView() {
   const { threadId } = useParams();
   const navigate = useNavigate();
   const { joinThread, leaveThread, threadPresence, socket } = useSocket();
-  const { activeOrg, activeMailbox, openComposer } = useMail();
+  const { activeOrg, activeMailbox, openComposer, labels } = useMail();
   
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,6 +22,7 @@ export default function ThreadView() {
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
 
   const [assignDropdownOpen, setAssignDropdownOpen] = useState(false);
+  const [labelsDropdownOpen, setLabelsDropdownOpen] = useState(false);
   const [moreOptionsId, setMoreOptionsId] = useState(null);
   const [members, setMembers] = useState([]);
 
@@ -225,7 +226,60 @@ export default function ThreadView() {
           
           <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors" title="Archive"><Archive size={16} /></button>
           <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors" title="Delete"><Trash2 size={16} /></button>
-          <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors" title="Tags"><Tag size={16} /></button>
+          <div className="relative">
+            <button 
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors" 
+              title="Labels"
+              onClick={() => setLabelsDropdownOpen(!labelsDropdownOpen)}
+            >
+              <Tag size={16} />
+            </button>
+            {labelsDropdownOpen && (
+              <div className="absolute left-0 top-full mt-1 bg-surface border border-border rounded-lg p-2 min-w-[200px] z-50 shadow-xl">
+                <div className="text-[11px] font-bold text-secondary uppercase mb-2 px-2">Apply Labels</div>
+                {labels?.map(label => {
+                  const isApplied = thread.labels?.some(l => 
+                    (typeof l === 'string' ? l : l._id) === label._id
+                  );
+                  return (
+                    <div 
+                      key={label._id} 
+                      className="flex items-center gap-2 px-2 py-1.5 hover:bg-white/10 rounded cursor-pointer transition-colors"
+                      onClick={async () => {
+                        try {
+                          const action = isApplied ? 'remove' : 'add';
+                          await api.post(`/mail/labels/thread/${thread._id}`, {
+                            orgId: activeOrg._id,
+                            labelId: label._id,
+                            action
+                          });
+                          // Optimistic update
+                          setData({
+                            ...data,
+                            thread: {
+                              ...thread,
+                              labels: isApplied 
+                                ? thread.labels.filter(l => (typeof l === 'string' ? l : l._id) !== label._id)
+                                : [...(thread.labels || []), label._id]
+                            }
+                          });
+                        } catch (error) {
+                          toast.error('Failed to update label');
+                        }
+                      }}
+                    >
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: label.color }}></div>
+                      <span className="text-[13px] text-main flex-1">{label.name}</span>
+                      {isApplied && <CheckCircle2 size={14} className="text-primary" />}
+                    </div>
+                  );
+                })}
+                {(!labels || labels.length === 0) && (
+                  <div className="text-[12px] text-secondary px-2 py-1">No custom labels found.</div>
+                )}
+              </div>
+            )}
+          </div>
           <button className="flex items-center justify-center w-10 h-10 rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors" title="More"><MoreVertical size={16} /></button>
         </div>
         

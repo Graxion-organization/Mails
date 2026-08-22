@@ -23,54 +23,32 @@ export const AuthProvider = ({ children }) => {
         const tokenFromUrl = params.get('token');
 
         if (tokenFromUrl) {
-          localStorage.setItem('graxion_access_token', tokenFromUrl);
+          try {
+            await api.post('/user/set-session', { token: tokenFromUrl });
+            // Notify other tabs to reload
+            localStorage.setItem('graxion_auth_sync', Date.now().toString());
+          } catch (err) {
+            console.error('Failed to set session', err);
+          }
           // Clean the URL
           params.delete('token');
           const cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
           window.history.replaceState({}, document.title, cleanUrl);
         }
 
-        // 2. Read token from localStorage
-        const token = localStorage.getItem('graxion_access_token');
-        if (!token) {
-          setIsLoading(false);
-          return; // No token — RequireAuth will handle the redirect
-        }
-
-        // 3. Decode and validate JWT structure (client-side check only)
-        let decoded = null;
-        try {
-          const payloadBase64 = token.split('.')[1];
-          decoded = JSON.parse(atob(payloadBase64));
-        } catch {
-          // Malformed token — clear and bail
-          localStorage.removeItem('graxion_access_token');
-          setIsLoading(false);
-          return;
-        }
-
-        // 4. Check if token is expired
-        if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-          localStorage.removeItem('graxion_access_token');
-          setIsLoading(false);
-          return;
-        }
-
-        // 5. Fetch profile data from Mail service (which proxies from Auth service)
+        // 2. Fetch profile data from Mail service
+        // The Mail backend will use the HttpOnly cookie we just set (or already had)
         try {
           const profileRes = await api.get('/user/me');
           
           setUser({
-            id: decoded.id,
-            sessionId: decoded.sessionId,
-            ...profileRes.data.data // Assuming response is { success: true, data: { ... } }
+            id: profileRes.data.id || profileRes.data.data?.id,
+            ...profileRes.data.data
           });
         } catch (err) {
-          console.error("Failed to fetch profile", err);
-          setUser({
-            id: decoded.id,
-            sessionId: decoded.sessionId,
-          });
+          console.error("Failed to fetch profile (No valid session)", err);
+          setUser(null);
+          // Do not redirect here, RequireAuth will handle it if user is null
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -81,6 +59,19 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
+
+    // Listen for cross-tab token changes
+    const handleStorageChange = (e) => {
+      if (e.key === 'graxion_auth_sync') {
+        if (e.oldValue !== e.newValue) {
+          // Auth state changed in another tab, reload the app to sync
+          window.location.reload();
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const redirectToAuth = () => {
@@ -97,8 +88,13 @@ export const AuthProvider = ({ children }) => {
     window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${currentUrl}&product=mail`;
   };
 
-  const logout = () => {
-    localStorage.removeItem('graxion_access_token');
+  const logout = async () => {
+    try {
+      await api.post('/user/logout');
+    } catch (err) {
+      console.error('Logout error', err);
+    }
+    localStorage.setItem('graxion_auth_sync', Date.now().toString());
     sessionStorage.removeItem(REDIRECT_GUARD_KEY);
     setUser(null);
     window.location.href = `${import.meta.env.VITE_AUTH_URL}/login`;
