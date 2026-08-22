@@ -443,84 +443,7 @@ export default function Settings() {
                 </div>
               </div>
               
-              {showMailboxModal && (
-                <div className="modal-overlay">
-                  <div className="modal-content">
-                    <h3>Create Mailbox</h3>
-                    <form onSubmit={handleCreateMailbox}>
-                      <div className="form-group">
-                        <label>Address</label>
-                        <div className="input-group">
-                          <input 
-                            type="text" 
-                            placeholder="support"
-                            value={newMailbox.localPart}
-                            onChange={e => setNewMailbox({...newMailbox, localPart: e.target.value})}
-                          />
-                          <span className="input-separator">@</span>
-                          <select 
-                            value={newMailbox.domainId}
-                            onChange={e => setNewMailbox({...newMailbox, domainId: e.target.value})}
-                          >
-                            <option value="">Select Domain</option>
-                            {domains.filter(d => d.status === 'verified').map(d => (
-                              <option key={d._id} value={d._id}>{d.domain}</option>
-                            ))}
-                            {domains.filter(d => d.status === 'verified').length === 0 && (
-                              <option value="" disabled>No verified domains available</option>
-                            )}
-                          </select>
-                        </div>
-                      </div>
-                      <div className="form-group">
-                        <label>Display Name</label>
-                        <input 
-                          type="text" 
-                          placeholder="e.g. Support Team"
-                          value={newMailbox.displayName}
-                          onChange={e => setNewMailbox({...newMailbox, displayName: e.target.value})}
-                        />
-                      </div>
-                      <div className="modal-actions">
-                        <button type="button" className="btn-ghost" onClick={() => setShowMailboxModal(false)}>Cancel</button>
-                        <button type="submit" className="btn-primary" disabled={loading}>Create</button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              )}
 
-              {editMailbox && (
-                <div className="modal-overlay">
-                  <div className="modal-content">
-                    <h3>Edit Mailbox</h3>
-                    <form onSubmit={handleUpdateMailbox}>
-                      <div className="form-group">
-                        <label>Address</label>
-                        <input 
-                          type="text" 
-                          value={editMailbox.address}
-                          disabled
-                          style={{ opacity: 0.5 }}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Display Name</label>
-                        <input 
-                          type="text" 
-                          placeholder="e.g. Support Team"
-                          value={editMailbox.displayName || ''}
-                          onChange={e => setEditMailbox({...editMailbox, displayName: e.target.value})}
-                        />
-                      </div>
-                      <div className="modal-actions">
-                        <button type="button" className="btn-ghost" onClick={() => setEditMailbox(null)}>Cancel</button>
-                        <button type="submit" className="btn-primary" disabled={loading}>Save Changes</button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -583,6 +506,85 @@ export default function Settings() {
 
         </div>
       </div>
+
+      {showMailboxModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Create Mailbox</h3>
+            <form onSubmit={handleCreateMailbox}>
+              <div className="form-group">
+                <label>Address</label>
+                <div className="input-group">
+                  <input 
+                    type="text" 
+                    placeholder="support"
+                    value={newMailbox.localPart}
+                    onChange={e => setNewMailbox({...newMailbox, localPart: e.target.value})}
+                  />
+                  <span className="input-separator">@</span>
+                  <select 
+                    value={newMailbox.domainId}
+                    onChange={e => setNewMailbox({...newMailbox, domainId: e.target.value})}
+                  >
+                    <option value="">Select Domain</option>
+                    {domains.filter(d => d.status === 'verified').map(d => (
+                      <option key={d._id} value={d._id}>{d.domain}</option>
+                    ))}
+                    {domains.filter(d => d.status === 'verified').length === 0 && (
+                      <option value="" disabled>No verified domains available</option>
+                    )}
+                  </select>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Display Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Support Team"
+                  value={newMailbox.displayName}
+                  onChange={e => setNewMailbox({...newMailbox, displayName: e.target.value})}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-ghost" onClick={() => setShowMailboxModal(false)}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={loading}>Create</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editMailbox && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Edit Mailbox</h3>
+            <form onSubmit={handleUpdateMailbox}>
+              <div className="form-group">
+                <label>Address</label>
+                <input 
+                  type="text" 
+                  value={editMailbox.address}
+                  disabled
+                  style={{ opacity: 0.5 }}
+                />
+              </div>
+              <div className="form-group">
+                <label>Display Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Support Team"
+                  value={editMailbox.displayName || ''}
+                  onChange={e => setEditMailbox({...editMailbox, displayName: e.target.value})}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-ghost" onClick={() => setEditMailbox(null)}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={loading}>Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

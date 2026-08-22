@@ -156,6 +156,7 @@
 
 .section-header-flex h2 {
   margin-bottom: 0;
+  white-space: nowrap;
 }
 
 /* Cards (Glassmorphism) */
