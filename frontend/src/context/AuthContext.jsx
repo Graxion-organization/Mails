@@ -54,11 +54,35 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        // 5. Set user from token payload
-        setUser({
-          id: decoded.id,
-          sessionId: decoded.sessionId,
-        });
+        // 5. Fetch profile data from Auth service
+        try {
+          const authApiUrl = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:6000/api';
+          const profileRes = await fetch(`${authApiUrl}/profile`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            setUser({
+              id: decoded.id,
+              sessionId: decoded.sessionId,
+              ...profileData.data // This will include avatar, fullName, email, etc.
+            });
+          } else {
+             setUser({
+               id: decoded.id,
+               sessionId: decoded.sessionId,
+             });
+          }
+        } catch (err) {
+          console.error("Failed to fetch profile", err);
+          setUser({
+            id: decoded.id,
+            sessionId: decoded.sessionId,
+          });
+        }
       } catch (error) {
         console.error('Auth initialization error:', error);
         setAuthError('Authentication failed');
