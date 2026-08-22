@@ -243,6 +243,22 @@ export default function Settings() {
     }
   };
 
+  const handleRemoveMember = async (memberId) => {
+    if (!window.confirm('Are you sure you want to remove this member? Their access will be revoked immediately.')) return;
+    try {
+      setLoading(true);
+      const res = await api.delete(`/orgs/${activeOrg._id}/members/${memberId}`);
+      if (res.data.success) {
+        toast.success('Member removed');
+        loadMembers();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to remove member');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!activeOrg) return null;
 
   return (
@@ -541,6 +557,14 @@ export default function Settings() {
                           <option value="admin">Admin</option>
                           <option value="member">Member</option>
                         </select>
+                        <button 
+                          className="btn-icon text-red-400 hover:text-red-300 hover:bg-red-400/10 ml-2"
+                          onClick={() => handleRemoveMember(member._id)}
+                          title="Remove Member"
+                          disabled={member.role === 'owner'}
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </div>
                   ))}
