@@ -100,7 +100,7 @@ export const listMembers = async (req, res) => {
   try {
     const members = await Member.find({
       organization: req.params.orgId,
-      status: { $in: ['active', 'invited', 'pending_approval'] },
+      status: { $in: ['active', 'invited', 'pending_approval', 'suspended'] },
     }).sort({ role: 1, createdAt: 1 });
 
     res.json({ success: true, data: members });
