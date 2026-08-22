@@ -58,6 +58,12 @@ export const SocketProvider = ({ children }) => {
        // Optional: could toast if you're not in the thread, but mostly handled by ThreadView
     });
 
+    socketInstance.on('org_membership_updated', () => {
+      toast.success('Your organization access has been updated!');
+      // Force reload to update active orgs
+      window.location.reload();
+    });
+
     return () => {
       socketInstance.disconnect();
     };

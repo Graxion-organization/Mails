@@ -250,6 +250,17 @@ export const approveMember = async (req, res) => {
     member.joinedAt = new Date();
     await member.save();
 
+    try {
+      const { getIO } = await import('../sockets/socketHandler.js');
+      const io = getIO();
+      io.to(`user:${member.account}`).emit('org_membership_updated', {
+        orgId: req.params.orgId,
+        status: 'active'
+      });
+    } catch (err) {
+      console.error('Socket emit error:', err);
+    }
+
     await AuditLog.create({
       organization: req.params.orgId,
       account: req.accountId,
