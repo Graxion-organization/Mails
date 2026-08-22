@@ -20,7 +20,7 @@ export const getMe = async (req, res) => {
       console.error(`Expected JSON from ${authUrl}/api/profile but got:`, text.substring(0, 100));
       return res.status(502).json({
         success: false,
-        message: `Auth service returned an invalid response. Make sure GRAXION_AUTH_URL points to the Auth Backend API, not the frontend. Current URL: ${authUrl}`,
+        message: 'Auth service returned an invalid response. Please check backend configuration.',
       });
     }
 
