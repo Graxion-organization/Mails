@@ -495,14 +495,14 @@ export default function Settings() {
                 </div>
               </div>
               <div className="settings-card no-padding">
-                <div className="data-table">
+                <div className="list-container">
                   {members.map(member => (
-                    <div key={member._id} className="table-row">
-                      <div className="col-info">
+                    <div key={member._id} className="list-item">
+                      <div className="item-info">
                         <strong>{member.account?.name || member.email}</strong>
-                        <span className="text-secondary">{member.email}</span>
+                        <span className="text-secondary sub-text">{member.email}</span>
                       </div>
-                      <div className="col-action">
+                      <div className="item-actions">
                         <select 
                           value={member.role}
                           onChange={(e) => handleUpdateRole(member._id, e.target.value)}
@@ -572,14 +572,14 @@ export default function Settings() {
               </div>
 
               <div className="settings-card no-padding">
-                <div className="data-table">
+                <div className="list-container">
                   {labels.map(label => (
-                    <div key={label._id} className="table-row">
-                      <div className="col-info flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: label.color }} />
+                    <div key={label._id} className="list-item">
+                      <div className="item-info flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: label.color, flexShrink: 0 }} />
                         <strong>{label.name}</strong>
                       </div>
-                      <div className="col-action">
+                      <div className="item-actions">
                         <button 
                           className="btn-icon text-red-400 hover:text-red-300 hover:bg-red-400/10"
                           onClick={async () => {
@@ -600,7 +600,7 @@ export default function Settings() {
                     </div>
                   ))}
                   {labels.length === 0 && (
-                    <div className="p-6 text-center text-secondary text-sm">
+                    <div className="empty-state">
                       No custom labels created yet.
                     </div>
                   )}

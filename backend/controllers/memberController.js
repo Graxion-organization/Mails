@@ -37,7 +37,7 @@ export const inviteMember = async (req, res) => {
 
     const member = await Member.create({
       organization: req.params.orgId,
-      account: '', // Will be set when they accept
+      account: `pending_${crypto.randomBytes(8).toString('hex')}`, // Will be updated to their real account ID when they accept
       role,
       invitedBy: req.accountId,
       invitedEmail: email.toLowerCase(),
