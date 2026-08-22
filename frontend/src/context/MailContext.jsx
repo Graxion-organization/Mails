@@ -60,6 +60,8 @@ export const MailProvider = ({ children }) => {
 
   useEffect(() => {
     if (activeOrg) {
+      setActiveMailbox(null);
+      setMailboxes([]);
       fetchMailboxes(activeOrg._id);
       fetchLabels(activeOrg._id);
     }
@@ -92,6 +94,8 @@ export const MailProvider = ({ children }) => {
         setMailboxes(res.data.data);
         if (res.data.data.length > 0) {
           setActiveMailbox(res.data.data[0]);
+        } else {
+          setActiveMailbox(null);
         }
       }
     } catch (error) {
