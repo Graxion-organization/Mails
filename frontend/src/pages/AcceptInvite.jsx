@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 export default function AcceptInvite() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get('inviteToken');
   const navigate = useNavigate();
   
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
