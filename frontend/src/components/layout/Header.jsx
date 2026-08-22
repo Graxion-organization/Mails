@@ -25,7 +25,7 @@ export default function Header({ onMenuClick }) {
   const flowUrl = import.meta.env.VITE_FLOW_URL || 'https://flow.graxion.in';
 
   return (
-    <header className="h-16 shrink-0 flex items-center justify-between px-6 border-b border-white/5 bg-bg">
+    <header className="h-14 lg:h-16 shrink-0 flex items-center justify-between px-4 lg:px-6 border-b border-white/5 bg-bg">
       <div className="flex items-center gap-4">
         <button className="lg:hidden p-2 -ml-2 rounded-lg text-main hover:bg-white/5" onClick={onMenuClick}>
           <Menu size={20} />
@@ -48,12 +48,7 @@ export default function Header({ onMenuClick }) {
       </div>
       
       <div className="flex items-center gap-2">
-        <button className="relative w-10 h-10 flex items-center justify-center rounded-lg text-secondary hover:text-main hover:bg-white/5 transition-colors">
-          <Bell size={20} />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full ring-2 ring-bg"></span>
-        </button>
-        
-        <div className="relative flex items-center gap-3 ml-2 pl-4 border-l border-white/5" ref={profileRef}>
+        <div className="relative flex items-center gap-3" ref={profileRef}>
           <button 
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="flex items-center justify-center outline-none ring-2 ring-transparent focus:ring-primary/50 rounded-full transition-all"
