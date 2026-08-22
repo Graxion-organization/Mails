@@ -152,6 +152,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  gap: 16px;
 }
 
 .section-header-flex h2 {
@@ -222,24 +223,26 @@
 
 /* Buttons */
 .btn-primary {
-  background: linear-gradient(135deg, #fff 0%, #e4e4e7 100%);
-  color: #000;
-  border: none;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #e4e4e7;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 10px 24px;
   border-radius: 10px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover:not(:disabled) {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
 }
 
 .btn-primary:disabled {
