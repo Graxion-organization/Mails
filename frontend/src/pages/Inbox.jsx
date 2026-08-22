@@ -337,8 +337,8 @@ export default function Inbox({ folder = 'inbox', mode = 'normal' }) {
                     {thread.messageCount > 1 && <span className="bg-white/10 text-main text-[11px] font-bold px-1.5 py-0.5 rounded-md ml-auto sm:ml-0">{thread.messageCount}</span>}
                   </div>
                   
-                  <div className="flex items-center min-w-0 flex-1 gap-2">
-                    <span className={`truncate text-[14px] ${isUnread ? 'font-semibold text-main' : 'text-main/90'}`}>
+                  <div className="flex items-center min-w-0 flex-1 w-full gap-2">
+                    <span className={`truncate block flex-1 min-w-0 text-[14px] ${isUnread ? 'font-semibold text-main' : 'text-main/90'}`}>
                       {thread.subject || '(No Subject)'}
                     </span>
                     
