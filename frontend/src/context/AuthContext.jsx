@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     sessionStorage.setItem(REDIRECT_GUARD_KEY, Date.now().toString());
-    const currentUrl = encodeURIComponent(window.location.origin);
+    const currentUrl = encodeURIComponent(window.location.href);
     window.location.href = `${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${currentUrl}&product=mail`;
   };
 

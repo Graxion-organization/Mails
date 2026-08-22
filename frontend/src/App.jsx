@@ -39,7 +39,7 @@ function RequireAuth({ children }) {
           {authError}
         </p>
         <a
-          href={`${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${encodeURIComponent(window.location.origin)}&product=mail`}
+          href={`${import.meta.env.VITE_AUTH_URL}/login?redirect_to=${encodeURIComponent(window.location.href)}&product=mail`}
           className="btn-primary"
           style={{ textDecoration: 'none' }}
         >
